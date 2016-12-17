@@ -1,0 +1,29 @@
+{
+  "name": "homebridge-myhome",
+  "version": "0.0.7",
+  "description": "Legrand MyHome plugin for homebridge: https://github.com/nfarina/homebridge",
+  "license": "MIT",
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "engines": {
+    "node": ">=0.12.0",
+    "homebridge": ">=0.2.0"
+  },
+  "author": {
+    "name": "Angelo Conforti"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/angeloxx/homebridge-myhome"
+  },
+  "dependencies": {
+    "colorsys": "^1.0.9",
+    "net": "^1.0.0",
+    "sprint-fs": "^1.0.0",
+    "xml2json": "^0.10.0",
+    "libxmljs": "^0.18.0",
+    "wait-until": "^0.0.2",
+    "promise": "^7.0.0"
+  }
+}
