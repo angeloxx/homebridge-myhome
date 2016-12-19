@@ -19,11 +19,14 @@
   },
   "dependencies": {
     "colorsys": "^1.0.9",
-    "net": "^1.0.0",
-    "sprint-fs": "^1.0.0",
-    "xml2json": "^0.10.0",
+    "debug": "^2.4.5",
     "libxmljs": "^0.18.0",
-    "wait-until": "^0.0.2",
-    "promise": "^7.0.0"
+    "net": "^1.0.0",
+    "promise": "^7.0.0",
+    "sha1": "^1.1.1",
+    "sha256": "^0.2.0",
+    "sprint-fs": "^1.0.0",
+    "sprintf-js": "^1.0.3",
+    "wait-until": "^0.0.2"
   }
 }

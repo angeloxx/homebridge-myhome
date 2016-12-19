@@ -1,0 +1,14 @@
+{
+    "platforms": [{
+        "platform": "LegrandMyHome",
+        "ipaddress": "192.168.157.213"
+        }], 
+    "bridge": {
+        "username": "CC:22:3D:E3:CE:31", 
+        "name": "MyHome HomeBridge Adapter", 
+        "pin": "342-52-220", 
+        "port": 51826
+    }, 
+    "description": "My Fantastic MyHome System", 
+    "accessories": []
+}
