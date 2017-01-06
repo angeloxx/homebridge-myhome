@@ -46,7 +46,7 @@ class MHRelay {
 		this.log = log;
 		this.bri = 100;
 		this.power = false;
-		this.parent = config.parent;
+		this.mh = config.parent.controller;
 		this.sat = 0;
 		this.hue = 0;
 		this.address = config.address;
@@ -70,7 +70,7 @@ class MHRelay {
 					this.bri = 100;
 				}
 				// this.parent.infusion.Load_Dim(this.address, this.power * this.bri);
-				this.parent.controller.send(sprintf("*1*%d*15##",1*this.power))
+				this.mh.lightCommand(this.address,this.power)
 				callback(null);
 			})
 			.on('get', (callback) => {
