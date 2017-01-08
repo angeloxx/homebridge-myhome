@@ -28,7 +28,6 @@ class LegrandMyHome {
 		this.config.devices.forEach(function (accessory) {
 			this.log.info("LegrandMyHome: adds accessory");
 			accessory.parent = this;
-
 			if (accessory.accessory == 'MHRelay') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHDimmer') this.devices.push(new MHDimmer(this.log,accessory))
 		}.bind(this));
@@ -41,13 +40,22 @@ class LegrandMyHome {
 	onRelay(_address,_onoff) {
 		this.devices.forEach(function(accessory) {
 			if (accessory.address == _address && accessory.lightBulbService !== undefined) {
-				this.log.info(_onoff);
 				accessory.power = _onoff;
 				accessory.bri = _onoff * 100;
 				accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
 			}
 		}.bind(this));
 	}
+
+	onDimmer(_address,_level) {
+		this.devices.forEach(function(accessory) {
+			if (accessory.address == _address && accessory.lightBulbService !== undefined) {
+				accessory.power = (_level > 0) ? 1 : 0;
+				accessory.bri = _level;
+				accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
+			}
+		}.bind(this));
+	}	
 
 	accessories(callback) {
 		this.log.debug("LegrandMyHome (accessories readed)");
