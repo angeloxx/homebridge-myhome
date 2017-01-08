@@ -2,37 +2,22 @@
     "platforms": [{
         "platform": "LegrandMyHome",
         "ipaddress": "192.168.157.213",
+        "port": 20000,
         "ownpassword": "12345",
-        "discovery": false /* TBD, it will support discovery and disable static accessory configuration */
-        }], 
+        "discovery": false,
+        "devices": [{
+            "accessory": "MHRelay",
+            "name": "Bathroom Light",
+            "address": "0/1/5"
+            }]
+        }],
     "bridge": {
         "username": "CC:22:3D:E3:CE:31", 
         "name": "MyHome HomeBridge Adapter", 
         "pin": "342-52-220", 
-        "port": 51826
+        "port": 51827
     }, 
     "description": "My MyHome Home System",
-    "accessories": [ /* Static implementation, discovery will comes in next version */
-        {
-            "accessory": "MHRelay",
-            "name": "Bathroom Light",
-            "address": "0/1/5"
-        },{
-            "accessory": "MHDimmer100",
-            "name": "Bedroom Central Light",
-            "address": "0/1/2"
-        },{
-            "accessory": "MHRelay",
-            "name": "Office Central Light",
-            "address": "0/1/1"
-        },{
-            "accessory": "MHRelay",
-            "name": "Kitchen",
-            "address": "0/1/3"
-        },{
-            "accessory": "MHHomeThermostat",
-            "name": "Hallway",
-            "address": "21"
-        }
+    "accessories": [
     ]
 }
