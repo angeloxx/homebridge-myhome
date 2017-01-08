@@ -22,7 +22,7 @@ class LegrandMyHome {
 		this.config = config || {};
 		this.api = api;
 		this.log.info("LegrandMyHome for MyHome Gateway at " + config.ipaddress + ":" + config.port);
-		this.controller = new mh.MyHomeClient(config.ipaddress, config.port, config.ownpassword, false);
+		this.controller = new mh.MyHomeClient(config.ipaddress, config.port, config.ownpassword, null);
 		this.ready = false;
 		this.devices = [];
 		this.config.devices.forEach(function (accessory) {
@@ -30,6 +30,10 @@ class LegrandMyHome {
 			accessory.parent = this;
 			this.devices.push(new MHRelay(this.log,accessory))
 		}.bind(this));
+	}
+
+	onMonitorFeedback(_frame) {
+
 	}
 
 	accessories(callback) {
