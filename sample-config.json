@@ -9,6 +9,14 @@
             "accessory": "MHRelay",
             "name": "Bathroom Light",
             "address": "0/1/5"
+            },{
+            "accessory": "MHRelay",
+            "name": "Night hallway Light",
+            "address": "0/1/1"
+            },{
+            "accessory": "MHDimmer",
+            "name": "Master bedroom Central",
+            "address": "0/1/2"
             }]
         }],
     "bridge": {
