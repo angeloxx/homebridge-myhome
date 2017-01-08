@@ -22,7 +22,7 @@ class LegrandMyHome {
 		this.config = config || {};
 		this.api = api;
 		this.log.info("LegrandMyHome for MyHome Gateway at " + config.ipaddress + ":" + config.port);
-		this.controller = new mh.MyHomeClient(config.ipaddress, config.port, config.ownpassword, null);
+		this.controller = new mh.MyHomeClient(config.ipaddress, config.port, config.ownpassword, this);
 		this.ready = false;
 		this.devices = [];
 		this.config.devices.forEach(function (accessory) {
@@ -32,8 +32,19 @@ class LegrandMyHome {
 		}.bind(this));
 	}
 
-	onMonitorFeedback(_frame) {
+	onMonitor(_frame) {
 
+	}
+
+	onRelay(_address,_onoff) {
+		this.devices.forEach(function(accessory) {
+			if (accessory.address == _address && accessory.lightBulbService !== undefined) {
+				this.log.info(_onoff);
+				accessory.power = _onoff;
+				accessory.bri = _onoff * 100;
+				accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
+			}
+		}.bind(this));
 	}
 
 	accessories(callback) {
@@ -44,17 +55,18 @@ class LegrandMyHome {
 
 class MHRelay {
 	constructor(log, config) {
+		this.mh = config.parent.controller;
 		this.name = config.name;
+		this.address = config.address;
 		this.displayName = config.name;
 		this.UUID = UUIDGen.generate(config.address);
 		this.log = log;
-		this.bri = 100;
+		
 		this.power = false;
-		this.mh = config.parent.controller;
+		this.bri = 100;
 		this.sat = 0;
 		this.hue = 0;
-		this.address = config.address;
-		this.log.info("LegrandMyHome::MHRelay create object");
+		this.log.info(sprintf("LegrandMyHome::MHRelay create object: %s", this.address));
 	}
 
 	getServices() {
@@ -73,7 +85,6 @@ class MHRelay {
 				if (this.power && this.bri == 0) {
 					this.bri = 100;
 				}
-				// this.parent.infusion.Load_Dim(this.address, this.power * this.bri);
 				this.mh.lightCommand(this.address,this.power)
 				callback(null);
 			})
@@ -81,8 +92,6 @@ class MHRelay {
 				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
 				callback(null, this.power);
 			});
-
-		// this.parent.infusion.getLoadStatus(this.address);
 		return [service, this.lightBulbService];
 	}
 }
