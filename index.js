@@ -87,7 +87,7 @@ class MHRelay {
 				if (this.power && this.bri == 0) {
 					this.bri = 100;
 				}
-				this.mh.lightCommand(this.address,this.power)
+				this.mh.relayCommand(this.address,this.power)
 				callback(null);
 			})
 			.on('get', (callback) => {
