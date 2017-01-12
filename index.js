@@ -30,6 +30,7 @@ class LegrandMyHome {
 			accessory.parent = this;
 			if (accessory.accessory == 'MHRelay') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHDimmer') this.devices.push(new MHDimmer(this.log,accessory))
+			if (accessory.accessory == 'MHThermostat') this.devices.push(new MHThermostat(this.log,accessory))
 		}.bind(this));
 	}
 
@@ -55,7 +56,18 @@ class LegrandMyHome {
 				accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
 			}
 		}.bind(this));
-	}	
+	}
+
+	onThermostat(_address,_measure,_level) {
+		this.devices.forEach(function(accessory) {
+			if (accessory.address == _address && accessory.TemperatureSensor !== undefined) {
+				if (_measure == "AMBIENT") {
+					accessory.ambient = _level;
+					accessory.lightBulbService.getCharacteristic(Characteristic.getTemperature).getValue(null);
+				}
+			}
+		}.bind(this));		
+	}
 
 	accessories(callback) {
 		this.log.debug("LegrandMyHome (accessories readed)");
@@ -160,4 +172,57 @@ class MHDimmer {
 			});			
 		return [service, this.lightBulbService];
 	}
+}
+
+
+class MHThermostat {
+	constructor(log, config) {
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(config.address);
+		this.log = log;
+		
+		this.ambient = -1;
+		this.setpoint = -1;
+		this.mode = -1;
+		this.log.info(sprintf("LegrandMyHome::MHThermostat create object: %s", this.address));
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Dimmer")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		this.thermostatService = new Service.Thermostat(this.name);
+		this.thermostatService.getCharacteristic(Characteristic.CurrentTemperature)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getCurrentTemperature %s = %s",this.address, this.ambient));
+				callback(null, this.ambient);
+			});
+
+		this.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState)
+			.on('get', (callback) => {
+				callback(null, 10);
+			});			
+
+		this.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState)
+			.on('get', (callback) => {
+				callback(null, 10);
+			});			
+
+		this.thermostatService.getCharacteristic(Characteristic.TargetTemperature).setProps({minValue: 15, minStep:0.5, maxValue: 40})
+			.on('set', (callback) => {
+				
+			}).on('get', (callback) => {
+				this.log.debug(sprintf("getCurrentSetpoint %s = %s",this.address, 10));
+				callback(null, 10);
+			});
+
+
+		return [service, this.thermostatService];
+	}	
 }
