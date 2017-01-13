@@ -44,11 +44,11 @@ Enjoy!
 
 Run this commands as root:
 
-   npm -g install homebridge-myhome-tng
+    npm -g install homebridge-myhome-tng
    
 Create your config.json file starting from the template (sample-config.json) and then:
 
-   homebridge -U .
+    homebridge -U .
 
 Sample log is:
 
