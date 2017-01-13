@@ -54,6 +54,7 @@ Please wait
 - Semi-auto discovery and/or read a plant configuration from MyHomeSuite configuration file
 - Read the correct light level of 100-levels dimmer
 - Read the light level state of all devices in all buses
+- Re-order the code
 
 # Disclaimer
 
