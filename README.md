@@ -42,7 +42,7 @@ Enjoy!
 
 # Installation (TBD)
 
-Run this commands as root:
+Run as root:
 
     npm -g install homebridge-myhome-tng
    
