@@ -42,7 +42,50 @@ Enjoy!
 
 # Installation (TBD)
 
-Please wait
+Run this commands as root:
+
+   npm -g install homebridge-myhome-tng
+   
+Create your config.json file starting from the template (sample-config.json) and then:
+
+   homebridge -U .
+
+Sample log is:
+
+    [1/14/2017, 12:11:29 AM] Plugin /usr/lib/nodejs does not have a package name that begins with 'homebridge-'.
+    [1/14/2017, 12:11:29 AM] Loaded plugin: homebridge-myhome-tng
+    [1/14/2017, 12:11:29 AM] Registering platform 'homebridge-myhome.LegrandMyHome'
+    [1/14/2017, 12:11:29 AM] ---
+    [1/14/2017, 12:11:29 AM] Loaded config.json with 0 accessories and 1 platforms.
+    [1/14/2017, 12:11:29 AM] ---
+    [1/14/2017, 12:11:29 AM] Loading 1 platforms...
+    [1/14/2017, 12:11:29 AM] Initializing LegrandMyHome platform...
+    [1/14/2017, 12:11:29 AM] LegrandMyHome: adds accessory
+    [1/14/2017, 12:11:29 AM] LegrandMyHome::MHRelay create object: 0/1/5
+    [1/14/2017, 12:11:29 AM] LegrandMyHome: adds accessory
+    [1/14/2017, 12:11:29 AM] LegrandMyHome::MHRelay create object: 0/1/1
+    [1/14/2017, 12:11:29 AM] LegrandMyHome: adds accessory
+    [1/14/2017, 12:11:29 AM] LegrandMyHome::MHRelay create object: 0/1/4
+    [1/14/2017, 12:11:29 AM] LegrandMyHome: adds accessory
+    [1/14/2017, 12:11:29 AM] LegrandMyHome::MHRelay create object: 0/1/2
+    [1/14/2017, 12:11:29 AM] LegrandMyHome: adds accessory
+    [1/14/2017, 12:11:29 AM] LegrandMyHome::MHThermostat create object: 21
+    [1/14/2017, 12:11:29 AM] LegrandMyHome: adds accessory
+    [1/14/2017, 12:11:29 AM] LegrandMyHome for MyHome Gateway at 192.168.157.213:20000
+    [1/14/2017, 12:11:29 AM] Initializing platform accessory 'Bathroom Light'...
+    [1/14/2017, 12:11:29 AM] Initializing platform accessory 'Night hallway Light'...
+    [1/14/2017, 12:11:29 AM] Initializing platform accessory 'Office'...
+    [1/14/2017, 12:11:29 AM] Initializing platform accessory 'Master bedroom Central'...
+    [1/14/2017, 12:11:29 AM] Initializing platform accessory 'Living Room Thermostat'...
+    [1/14/2017, 12:11:29 AM] Loading 0 accessories...
+    Scan this code with your HomeKit App on your iOS device to pair with Homebridge:
+
+        ┌────────────┐
+        │ 342-52-220 │
+        └────────────┘
+
+    [1/14/2017, 12:11:29 AM] Homebridge is running on port 51827.
+
 
 ## Configuration
 
