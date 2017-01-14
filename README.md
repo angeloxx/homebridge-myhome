@@ -89,7 +89,82 @@ Sample log is:
 
 ## Configuration
 
-Please wait 
+Only the platforms section of the config.json file should be edited, the pair code and the port in bridge section can be ignored in most of the cases. A little sample:
+
+    {
+        "platforms": [{
+            "platform": "LegrandMyHome",
+            "ipaddress": "192.168.157.207",
+            "port": 20000,
+            "ownpassword": "12345",
+            "discovery": false,
+            "devices": [{
+                "accessory": "MHRelay",
+                "name": "Bathroom Light",
+                "address": "0/1/5"
+                },{
+                "accessory": "MHRelay",
+                "name": "Night hallway Light",
+                "address": "0/1/1"
+                },{
+                "accessory": "MHRelay",
+                "name": "Office",
+                "address": "0/1/4"
+                },{
+                "accessory": "MHDimmer",
+                "name": "Master bedroom Central",
+                "address": "0/1/2"
+                },{
+                "accessory": "MHThermostat",
+                "name": "Living Room Thermostat",
+                "address": "21"
+                },{
+                "accessory": "MHThermostatExternal",
+                "name": "External Thermo Sensor",
+                "address": "1"
+                }]
+            }],
+        "bridge": {
+            "username": "CC:22:3D:E3:CE:31", 
+            "name": "MyHome HomeBridge Adapter", 
+            "pin": "342-52-220", 
+            "port": 51827
+        }, 
+        "description": "My MyHome Home System",
+        "accessories": [
+        ]
+    }
+
+The first part of the config file contains details about the MyHome Gateway used to interface the IP network with the plant:
+
+        "platforms": [{
+            "platform": "LegrandMyHome",
+            "ipaddress": "192.168.157.207",
+            "port": 20000,
+            "ownpassword": "12345",
+            "discovery": false,
+            "devices": [{
+
+You need to change:
+- ipaddress: put the IP address or name of the MyHome Gateway (eg. F454 or MH201, I'm not so updated about all gateways that BTicino-Legrand releases after 2015); the IP should be static but in the future I can implement a UPNP dicovery because all gateways supports that method
+- port: should be 20000 and keep this value
+- ownpassword: the OpenWebNet password, default is 12345 but everyone will suggest to you to change it with another password (4 to 9 digits), but you will keep the default one, I know...
+- discovery: boolean value, not supported but in the future allows the gateway to discover the plant and detect most of devices
+- devices: list of installed devices
+
+The devices section contains the list of devices that will be managed. All devices contains three standard properties:
+
+- accessory: the technical name of the device, should be one of the names listed in this document
+- name: mnemonic name, will be displayed by iOS HomeKit application
+- address: the MyHome address, usually in B/A/PL format for lights and curtaints or single/double digits for other devices. B stands for BUS (usually 0), A and PL is the name of the addressing object used by BTicino and stands for Ambient and Light Point (Punto Luce in the original italian version)
+
+- MHRelay: Standard (Lighting) Relay, address is B/A/PL (eg. 0/1/10)
+- MHDimmer: Lighting Dimmer, address is B/A/PL (eg. 0/1/10)
+- MHThermostat: Standard Thermostat controlled by a 99-Zones Central Station (code 3550), address is the Zone Identifier (1-99)
+- MHThermostatExternal: (WILL BE SUPPORTED)
+- MHOutlet: (WILL BE SUPPORTED) -- Standard (not-Lighting) Relay, address is B/A/PL (eg. 0/1/10)
+- MHCurtain: (WILL BE SUPPORTED) -- Standard Automation Relay, address is B/A/PL (eg. 0/1/10)
+
 
 # TODOS
 
@@ -98,6 +173,7 @@ Please wait
 - Read the correct light level of 100-levels dimmer
 - Read the light level state of all devices in all buses
 - Re-order the code
+- IP Gateway discovery
 
 # Disclaimer
 
