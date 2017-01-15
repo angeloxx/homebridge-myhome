@@ -27,6 +27,7 @@ class LegrandMyHome {
 			this.log.info("LegrandMyHome: adds accessory");
 			accessory.parent = this;
 			if (accessory.accessory == 'MHRelay') this.devices.push(new MHRelay(this.log,accessory))
+			if (accessory.accessory == 'MHBlind') this.devices.push(new MHBlind(this.log,accessory))
 			if (accessory.accessory == 'MHOutlet') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHRelayLight') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHDimmer') this.devices.push(new MHDimmer(this.log,accessory))
@@ -73,6 +74,29 @@ class LegrandMyHome {
 				accessory.power = (_level > 0) ? 1 : 0;
 				accessory.bri = _level;
 				accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
+			}
+		}.bind(this));
+	}
+
+	onSimpleBlind(_address,_value) {
+		this.devices.forEach(function(accessory) {
+			if (accessory.address == _address && accessory.windowCoveringService !== undefined) {
+				switch (_value) {
+					case 0:
+						accessory.state = Characteristic.PositionState.STOPPED;
+						accessory.evaluatePosition();
+						break;
+					case 1:
+						accessory.state = Characteristic.PositionState.INCREASING;
+						accessory.evaluatePosition();
+						break;
+					case 2:
+						accessory.state = Characteristic.PositionState.DECREASING;
+						accessory.evaluatePosition();
+						break;
+				}
+				accessory.windowCoveringService.getCharacteristic(Characteristic.PositionState).getValue(null);
+				accessory.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
 			}
 		}.bind(this));
 	}
@@ -158,6 +182,89 @@ class MHRelay {
 				callback(null, this.power);
 			});
 		return [service, this.lightBulbService];
+	}
+}
+
+class MHBlind {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.displayName = config.name;
+		this.time = config.time || 1;
+		this.UUID = UUIDGen.generate(sprintf("blind--%s",config.address));
+		this.log = log;
+		
+		this.runningStartTime = -1;
+		this.runningDirection = -1;
+		this.state = Characteristic.PositionState.STOPPED;
+		this.currentPosition = 0;
+		this.targetPosition = 0;
+		this.log.info(sprintf("LegrandMyHome::MHBlind create object: %s", this.address));
+	}
+
+	evaluatePosition() {
+		if (this.runningDirection == Characteristic.PositionState.STOPPED) {
+			this.runningStartTime = new Date();
+			this.runningDirection = this.state;
+		} else {
+			if (this.state == Characteristic.PositionState.STOPPED) {
+				if (this.runningDirection == Characteristic.PositionState.INCREASING) {
+					this.currentPosition = Math.min(100,this.currentPosition + (100 / (this.time*1000) * ((new Date())-this.runningStartTime)))
+				} else {
+					this.currentPosition = Math.max(0,this.currentPosition - (100 / (this.time*1000) * ((new Date())-this.runningStartTime)))
+				}
+				this.runningDirection = this.state;
+				this.runningStartTime = -1;
+			} else {
+				/* Uhm... */
+			}
+		}
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Blind")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		this.windowCoveringService = new Service.WindowCovering(this.name);
+
+		this.windowCoveringService.getCharacteristic(Characteristic.PositionState)
+			.on('set', (value, callback) => {
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getPositionState %s = %s",this.address, this.state));
+				callback(null, this.state);
+			});
+
+		this.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition)
+			.on('set', (value, callback) => {
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getCurrentPosition %s = %s",this.address, this.state));
+				callback(null, this.currentPosition);
+			});			
+
+		this.windowCoveringService.getCharacteristic(Characteristic.TargetPosition)
+			.on('set', (value, callback) => {
+				if (value > this.currentPosition) {
+					this.mh.simpleBlindCommand(this.address,1);
+				} else {
+					this.mh.simpleBlindCommand(this.address,2);
+				}
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getTargetPosition %s = %s",this.address, this.state));
+				callback(null, this.targetPosition);
+			});
+
+		return [service, this.windowCoveringService];
 	}
 }
 

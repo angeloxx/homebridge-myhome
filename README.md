@@ -160,13 +160,21 @@ The devices section contains the list of devices that will be managed. All devic
 
 ## Supported devices
 
-- MHRelay: Standard (Lighting) Relay (eg. F411), address is B/A/PL (eg. 0/1/10)
-- MHDimmer: Lighting Dimmer (eg. F427, F413N), address is B/A/PL (eg. 0/1/10)
-- MHThermostat: Standard Thermostat controlled by a 99-Zones Central Station (code 3550), address is the Zone Identifier (1-99)
-- MHExternalThermometer: External Probe controlled by a 99-Zones Central Station (code 3550), address is the Zone Identifier (1-9)
-- MHOutlet: Standard (not-Lighting) Relay, address is B/A/PL (eg. 0/1/10)
-- MHCurtain: (WILL BE SUPPORTED) -- Standard Automation Relay, address is B/A/PL (eg. 0/1/10)
-- MHContactSensor: Dry Contact sensor, address range is 1-201
+* MHRelay: Standard (Lighting) Relay (eg. F411), address is B/A/PL (eg. 0/1/10)
+* MHDimmer: Lighting Dimmer (eg. F427, F413N), address is B/A/PL (eg. 0/1/10)
+* MHThermostat: Standard Thermostat controlled by a 99-Zones Central Station (code 3550), address is the Zone Identifier (1-99)
+* MHExternalThermometer: External Probe controlled by a 99-Zones Central Station (code 3550), address is the Zone Identifier (1-9)
+* MHOutlet: Standard (not-Lighting) Relay, address is B/A/PL (eg. 0/1/10)
+* MHBlind: Standard Automation Relay (eg. F411, I need to check the F401), address is B/A/PL (eg. 0/1/10)
+  * this device defines another property called "time" that defines the configured "stop time" in seconds; using this property the driver can evaluate the current position of the blind
+
+* MHContactSensor: Dry Contact sensor (eg. 3477 or some burgalarm sensors), address range is 1-201
+* MHPowerMeter: (WILL BE SUPPORTED)
+
+## Tested devices
+- F454v1 and MH201 as IP Gateway
+- F411/2 as MHRelay, MHOutlet and MHCurtain
+- F416U1 as MHDimmer
 
 # TODOS
 
@@ -175,6 +183,7 @@ The devices section contains the list of devices that will be managed. All devic
 - Read the light level state of all devices in all buses
 - Re-order the code
 - IP Gateway discovery
+- Group support
 
 # Disclaimer
 
