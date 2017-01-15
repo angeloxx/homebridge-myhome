@@ -113,6 +113,27 @@ class LegrandMyHome {
 				if (_measure == "SETPOINT") {
 					accessory.setpoint = _level;
 					accessory.thermostatService.getCharacteristic(Characteristic.TargetTemperature).getValue(null);
+					accessory.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).getValue(null);
+				}
+				if (_measure == "HEATING") {
+					if (_level == true) {
+						accessory.state = Characteristic.CurrentHeatingCoolingState.HEAT;
+					} else {
+						if (accessory.state != Characteristic.CurrentHeatingCoolingState.COOL)
+							accessory.state = Characteristic.CurrentHeatingCoolingState.OFF;
+					}
+					accessory.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState).getValue(null);
+					accessory.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).getValue(null);
+				}
+				if (_measure == "COOLING") {
+					if (_level == true) {
+						accessory.state = Characteristic.CurrentHeatingCoolingState.COOL;
+					} else {
+						if (accessory.state != Characteristic.CurrentHeatingCoolingState.HEAT)
+							accessory.state = Characteristic.CurrentHeatingCoolingState.OFF;
+					}
+					accessory.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState).getValue(null);
+					accessory.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).getValue(null);
 				}
 			}
 		}.bind(this));		
@@ -363,6 +384,7 @@ class MHThermostat {
 		this.ambient = 0;
 		this.setpoint = 20;
 		this.mode = -1;
+		this.state = Characteristic.TargetHeatingCoolingState.OFF;
 		this.log.info(sprintf("LegrandMyHome::MHThermostat create object: %s", this.address));
 	}
 
@@ -382,18 +404,25 @@ class MHThermostat {
 
 		this.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState)
 			.on('get', (callback) => {
-				this.log.debug(sprintf("getCurrentHeatingCoolingState %s = %s",this.address, this.ambient));
-				callback(null, Characteristic.CurrentHeatingCoolingState.HEAT);
+				this.log.debug(sprintf("getCurrentHeatingCoolingState %s = %s",this.address, this.state));
+				callback(null, this.state);
 			}).on('set', (value,callback) => {
 				callback(null);
 			});	
 
 		this.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState)
 			.on('get', (callback) => {
-				this.log.debug(sprintf("getTargetHeatingCoolingState %s = %s",this.address, this.ambient));
-				callback(null, Characteristic.TargetHeatingCoolingState.HEAT);
+				this.log.debug(sprintf("getTargetHeatingCoolingState %s = %s",this.address, this.state));
+				if (parseInt(this.setpoint,10) > parseInt(this.ambient,10)) {
+					callback(null, Characteristic.TargetHeatingCoolingState.HEAT);
+				} else if (parseInt(this.setpoint,10) < parseInt(this.ambient,10)) {
+					callback(null, Characteristic.TargetHeatingCoolingState.COOL);
+				} else {
+					callback(null, Characteristic.TargetHeatingCoolingState.OFF);
+				}
 			}).on('set', (value,callback) => {
-				this.log.debug(sprintf("getTargetHeatingCoolingState %s = %s",this.address, this.ambient));
+				this.state = value;
+				this.log.debug(sprintf("setTargetHeatingCoolingState %s = %s",this.address, this.state));
 				callback(null);
 			});			
 
