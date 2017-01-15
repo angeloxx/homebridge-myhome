@@ -47,7 +47,7 @@
     "bridge": {
         "username": "CC:22:3D:E3:CE:31", 
         "name": "MyHome HomeBridge Adapter", 
-        "pin": "342-52-220", 
+        "pin": "023-42-522", 
         "port": 51827
     }, 
     "description": "My MyHome Home System",
