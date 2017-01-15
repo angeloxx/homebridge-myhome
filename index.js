@@ -27,7 +27,7 @@ class LegrandMyHome {
 			this.log.info("LegrandMyHome: adds accessory");
 			accessory.parent = this;
 			if (accessory.accessory == 'MHRelay') this.devices.push(new MHRelay(this.log,accessory))
-			if (accessory.accessory == 'MHLightOutlet') this.devices.push(new MHRelay(this.log,accessory))
+			if (accessory.accessory == 'MHRelayOutlet') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHRelayLight') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHDimmer') this.devices.push(new MHDimmer(this.log,accessory))
 			if (accessory.accessory == 'MHThermostat') this.devices.push(new MHThermostat(this.log,accessory))
@@ -100,6 +100,7 @@ class LegrandMyHome {
 
 class MHRelay {
 	constructor(log, config) {
+		this.config = config || {};
 		this.mh = config.parent.controller;
 		this.name = config.name;
 		this.address = config.address;
@@ -121,7 +122,15 @@ class MHRelay {
 			.setCharacteristic(Characteristic.Model, "Relay")
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
-		this.lightBulbService = new Service.Lightbulb(this.name);
+		switch (this.config.accessory) {
+			case 'MHRelayOutlet':
+				this.lightBulbService = new Service.Outlet(this.name);
+				break;
+		
+			default:
+				this.lightBulbService = new Service.Lightbulb(this.name);
+				break;
+		}
 
 		this.lightBulbService.getCharacteristic(Characteristic.On)
 			.on('set', (level, callback) => {
@@ -143,6 +152,7 @@ class MHRelay {
 
 class MHDimmer {
 	constructor(log, config) {
+		this.config = config || {};
 		this.mh = config.parent.controller;
 		this.name = config.name;
 		this.address = config.address;
@@ -200,6 +210,7 @@ class MHDimmer {
 
 class MHThermostat {
 	constructor(log, config) {
+		this.config = config || {};
 		this.mh = config.parent.controller;
 		this.name = config.name;
 		this.address = config.address;
@@ -268,6 +279,7 @@ class MHThermostat {
 
 class MHThermometer {
 	constructor(log, config) {
+		this.config = config || {};
 		this.mh = config.parent.controller;
 		this.name = config.name;
 		this.address = config.address;
