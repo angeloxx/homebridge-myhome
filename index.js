@@ -22,6 +22,7 @@ class LegrandMyHome {
 		this.api = api;
 		this.ready = false;
 		this.devices = [];
+		this.lightBuses = [];
 		this.controller = new mh.MyHomeClient(config.ipaddress, config.port, config.ownpassword, this);
 		this.config.devices.forEach(function (accessory) {
 			this.log.info("LegrandMyHome: adds accessory");
@@ -165,12 +166,12 @@ class MHRelay {
 		this.displayName = config.name;
 		this.UUID = UUIDGen.generate(sprintf("relay-%s",config.address));
 		this.log = log;
-		
 		this.power = false;
 		this.bri = 100;
 		this.sat = 0;
 		this.hue = 0;
 		this.log.info(sprintf("LegrandMyHome::MHRelay create object: %s", this.address));
+		this.mh.addLightBusDevice(this.address);
 	}
 
 	getServices() {
@@ -224,7 +225,8 @@ class MHBlind {
 		this.state = Characteristic.PositionState.STOPPED;
 		this.currentPosition = 0;
 		this.targetPosition = 0;
-		this.startDelayMs = config.startDelayMs || 250; /* Start delay of the automation and MH relay */
+		this.startDelayMs = config.startDelayMs || 0; /* Start delay of the automation and MH relay */
+		this.timeAdjust = config.timeAdjust || 5; /* Percent error, F411 is a bit buggy */
 		this.log.info(sprintf("LegrandMyHome::MHBlind create object: %s", this.address));
 	}
 
@@ -236,9 +238,9 @@ class MHBlind {
 		} else {
 			if (this.runningDirection != Characteristic.PositionState.STOPPED && this.state == Characteristic.PositionState.STOPPED) {
 				if (this.runningDirection == Characteristic.PositionState.INCREASING) {
-					this.currentPosition = Math.min(100,this.currentPosition + (100 / (this.time*1000) * ((new Date())-this.runningStartTime+this.startDelayMs)))
+					this.currentPosition = Math.min(100,this.currentPosition + (100 / (this.time*1000) * (((new Date())-this.runningStartTime+this.startDelayMs)*(1+this.timeAdjust/100))))
 				} else {
-					this.currentPosition = Math.max(0,this.currentPosition - (100 / (this.time*1000) * ((new Date())-this.runningStartTime+this.startDelayMs)))
+					this.currentPosition = Math.max(0,this.currentPosition - (100 / (this.time*1000) * (((new Date())-this.runningStartTime+this.startDelayMs)*(1+this.timeAdjust/100))))
 				}
 				this.runningDirection = this.state;
 				this.targetPosition = this.currentPosition;
