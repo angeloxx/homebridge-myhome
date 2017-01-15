@@ -36,6 +36,7 @@ class LegrandMyHome {
 			if (accessory.accessory == 'MHContactSensor') this.devices.push(new MHContactSensor(this.log,accessory))
 		}.bind(this));
 		this.log.info("LegrandMyHome for MyHome Gateway at " + config.ipaddress + ":" + config.port);
+		this.controller.start();
 	}
 
 	onMonitor(_frame) {
@@ -199,7 +200,7 @@ class MHBlind {
 		this.runningStartTime = -1;
 		this.runningDirection = -1;
 		this.state = Characteristic.PositionState.STOPPED;
-		this.currentPosition = 0;
+		this.currentPosition = 50;
 		this.targetPosition = 0;
 		this.log.info(sprintf("LegrandMyHome::MHBlind create object: %s", this.address));
 	}
