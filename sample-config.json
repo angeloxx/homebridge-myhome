@@ -37,6 +37,11 @@
             "accessory": "MHExternalThermometer",
             "name": "External Thermo Sensor",
             "address": "5"
+            },{
+            "accessory": "MHBlind",
+            "name": "Sample Curtain",
+            "address": "0/6/3",
+            "time": 10
             }]
         }],
     "bridge": {

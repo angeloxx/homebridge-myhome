@@ -170,17 +170,19 @@ The devices section contains the list of devices that will be managed. All devic
 
 * MHContactSensor: Dry Contact sensor (eg. 3477 or some burgalarm sensors), address range is 1-201
 * MHPowerMeter: (WILL BE SUPPORTED)
+* MHAlarm: (WILL BE SUPPORTED)
 
 ## Tested devices
 - F454v1 and MH201 as IP Gateway
 - F411/2 as MHRelay, MHOutlet and MHCurtain
 - F416U1 as MHDimmer
+- 3455 as MHExternalThermometer
+- 3477 as MHContactSensor
 
 # TODOS
 
 - Reconnection and infinite retry
 - Semi-auto discovery and/or read a plant configuration from MyHomeSuite configuration file
-- Read the light level state of all devices in all buses
 - Re-order the code
 - IP Gateway discovery
 - Group support
