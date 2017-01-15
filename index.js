@@ -10,10 +10,35 @@ module.exports = function (homebridge) {
 	Accessory = homebridge.platformAccessory;
 	UUIDGen = homebridge.hap.uuid;
 
-	inherits(MHRelay, Accessory);
+
+
+	/* Try to map Elgato's outlet custom vars */
+	LegrandMyHome.CurrentPowerConsumption = function() {
+		Characteristic.call(this, 'Consumption', 'E863F10D-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.UINT16,
+			unit: "Watts",
+			maxValue: 100000,
+			minValue: 0,
+			minStep: 1,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
+		});
+		this.value = this.getDefaultValue();
+		};
+		LegrandMyHome.CurrentPowerConsumption.UUID = 'E863F10D-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.CurrentPowerConsumption, Characteristic);
+	LegrandMyHome.PowerMeterService = function(displayName, subtype) {
+			Service.call(this, displayName, '00000001-0000-1777-8000-775D67EC4377', subtype);
+			this.addCharacteristic(LegrandMyHome.CurrentPowerConsumption);
+	};
+	inherits(LegrandMyHome.PowerMeterService, Service);
+
 	process.setMaxListeners(0);
 	homebridge.registerPlatform("homebridge-myhome", "LegrandMyHome", LegrandMyHome);
+
 };
+
+
 
 class LegrandMyHome {
 	constructor(log, config, api) {
@@ -35,6 +60,7 @@ class LegrandMyHome {
 			if (accessory.accessory == 'MHThermostat') this.devices.push(new MHThermostat(this.log,accessory))
 			if (accessory.accessory == 'MHExternalThermometer') this.devices.push(new MHThermometer(this.log,accessory))
 			if (accessory.accessory == 'MHContactSensor') this.devices.push(new MHContactSensor(this.log,accessory))
+			/* if (accessory.accessory == 'MHPowerMeter') this.devices.push(new MHPowerMeter(this.log,accessory)) */
 		}.bind(this));
 		this.log.info("LegrandMyHome for MyHome Gateway at " + config.ipaddress + ":" + config.port);
 		this.controller.start();
@@ -511,5 +537,36 @@ class MHContactSensor {
 			});
 
 		return [service, this.contactSensorService];
+	}	
+}
+
+class MHPowerMeter {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("powermeter-%s",config.address));
+		this.log = log;
+		
+		this.value = 0;
+		this.log.info(sprintf("LegrandMyHome::MHPowerMeter create object: %s", this.address));
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Power Meter")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		this.powerMeterService = new LegrandMyHome.PowerMeterService(this.name);
+		this.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption)
+			.on('get', (callback) => {
+				this.log.info(sprintf("getConsumption %s = %s",this.address, this.state));
+				callback(null, this.value);
+			});
+		return [service, this.powerMeterService];
 	}	
 }
