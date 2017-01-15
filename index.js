@@ -27,11 +27,12 @@ class LegrandMyHome {
 			this.log.info("LegrandMyHome: adds accessory");
 			accessory.parent = this;
 			if (accessory.accessory == 'MHRelay') this.devices.push(new MHRelay(this.log,accessory))
-			if (accessory.accessory == 'MHRelayOutlet') this.devices.push(new MHRelay(this.log,accessory))
+			if (accessory.accessory == 'MHOutlet') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHRelayLight') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHDimmer') this.devices.push(new MHDimmer(this.log,accessory))
 			if (accessory.accessory == 'MHThermostat') this.devices.push(new MHThermostat(this.log,accessory))
 			if (accessory.accessory == 'MHExternalThermometer') this.devices.push(new MHThermometer(this.log,accessory))
+			if (accessory.accessory == 'MHContactSensor') this.devices.push(new MHContactSensor(this.log,accessory))
 		}.bind(this));
 		this.log.info("LegrandMyHome for MyHome Gateway at " + config.ipaddress + ":" + config.port);
 	}
@@ -43,6 +44,7 @@ class LegrandMyHome {
 	onConnect() {
 		this.devices.forEach(function (accessory) {
 			if (accessory.thermostatService !== undefined) this.controller.getThermostatStatus(accessory.address);
+			if (accessory.contactSensorService !== undefined) this.controller.getContactState(accessory.address);
 		}.bind(this));
 	}
 
@@ -55,6 +57,15 @@ class LegrandMyHome {
 			}
 		}.bind(this));
 	}
+
+	onContactSensor(_address,_state) {
+		this.devices.forEach(function(accessory) {
+			if (accessory.address == _address && accessory.contactSensorService !== undefined) {
+				accessory.state = _state;
+				accessory.contactSensorService.getCharacteristic(Characteristic.ContactSensorState).getValue(null);
+			}
+		}.bind(this));
+	}	
 
 	onDimmer(_address,_level) {
 		this.devices.forEach(function(accessory) {
@@ -306,5 +317,37 @@ class MHThermometer {
 			});
 
 		return [service, this.thermometerService];
+	}	
+}
+
+class MHContactSensor {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("contactsensor-%s",config.address));
+		this.log = log;
+		
+		this.state = false;
+		this.log.info(sprintf("LegrandMyHome::MHContactSensor create object: %s", this.address));
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Contact Sensor")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		this.contactSensorService = new Service.ContactSensor(this.name);
+		this.contactSensorService.getCharacteristic(Characteristic.ContactSensorState)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getContactSensorState %s = %s",this.address, this.state));
+				callback(null, this.state);
+			});
+
+		return [service, this.contactSensorService];
 	}	
 }

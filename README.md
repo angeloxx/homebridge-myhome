@@ -158,19 +158,20 @@ The devices section contains the list of devices that will be managed. All devic
 - name: mnemonic name, will be displayed by iOS HomeKit application
 - address: the MyHome address, usually in B/A/PL format for lights and curtaints or single/double digits for other devices. B stands for BUS (usually 0), A and PL is the name of the addressing object used by BTicino and stands for Ambient and Light Point (Punto Luce in the original italian version)
 
-- MHRelay: Standard (Lighting) Relay, address is B/A/PL (eg. 0/1/10)
-- MHDimmer: Lighting Dimmer, address is B/A/PL (eg. 0/1/10)
-- MHThermostat: Standard Thermostat controlled by a 99-Zones Central Station (code 3550), address is the Zone Identifier (1-99)
-- MHThermostatExternal: (WILL BE SUPPORTED)
-- MHOutlet: (WILL BE SUPPORTED) -- Standard (not-Lighting) Relay, address is B/A/PL (eg. 0/1/10)
-- MHCurtain: (WILL BE SUPPORTED) -- Standard Automation Relay, address is B/A/PL (eg. 0/1/10)
+## Supported devices
 
+- MHRelay: Standard (Lighting) Relay (eg. F411), address is B/A/PL (eg. 0/1/10)
+- MHDimmer: Lighting Dimmer (eg. F427, F413N), address is B/A/PL (eg. 0/1/10)
+- MHThermostat: Standard Thermostat controlled by a 99-Zones Central Station (code 3550), address is the Zone Identifier (1-99)
+- MHExternalThermometer: External Probe controlled by a 99-Zones Central Station (code 3550), address is the Zone Identifier (1-9)
+- MHOutlet: Standard (not-Lighting) Relay, address is B/A/PL (eg. 0/1/10)
+- MHCurtain: (WILL BE SUPPORTED) -- Standard Automation Relay, address is B/A/PL (eg. 0/1/10)
+- MHContactSensor: Dry Contact sensor, address range is 1-201
 
 # TODOS
 
 - Reconnection and infinite retry
 - Semi-auto discovery and/or read a plant configuration from MyHomeSuite configuration file
-- Read the correct light level of 100-levels dimmer
 - Read the light level state of all devices in all buses
 - Re-order the code
 - IP Gateway discovery
