@@ -27,8 +27,11 @@ class LegrandMyHome {
 			this.log.info("LegrandMyHome: adds accessory");
 			accessory.parent = this;
 			if (accessory.accessory == 'MHRelay') this.devices.push(new MHRelay(this.log,accessory))
+			if (accessory.accessory == 'MHLightOutlet') this.devices.push(new MHRelay(this.log,accessory))
+			if (accessory.accessory == 'MHRelayLight') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHDimmer') this.devices.push(new MHDimmer(this.log,accessory))
 			if (accessory.accessory == 'MHThermostat') this.devices.push(new MHThermostat(this.log,accessory))
+			if (accessory.accessory == 'MHExternalThermometer') this.devices.push(new MHThermometer(this.log,accessory))
 		}.bind(this));
 		this.log.info("LegrandMyHome for MyHome Gateway at " + config.ipaddress + ":" + config.port);
 	}
@@ -77,6 +80,17 @@ class LegrandMyHome {
 			}
 		}.bind(this));		
 	}
+
+	onThermometer(_address,_measure,_level) {
+		this.devices.forEach(function(accessory) {
+			if (accessory.address == _address && accessory.thermometerService !== undefined) {
+				if (_measure == "AMBIENT") {
+					accessory.ambient = _level;
+					accessory.thermometerService.getCharacteristic(Characteristic.CurrentTemperature).getValue(null);
+				}
+			}
+		}.bind(this));		
+	}	
 
 	accessories(callback) {
 		this.log.debug("LegrandMyHome (accessories readed)");
@@ -207,7 +221,7 @@ class MHThermostat {
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		this.thermostatService = new Service.Thermostat(this.name);
-		this.thermostatService.getCharacteristic(Characteristic.CurrentTemperature)
+		this.thermostatService.getCharacteristic(Characteristic.CurrentTemperature).setProps({minValue: -50, minStep: 0.1, maxValue: 50})
 			.on('get', (callback) => {
 				this.log.debug(sprintf("getCurrentTemperature %s = %s",this.address, this.ambient));
 				callback(null, this.ambient);
@@ -249,5 +263,36 @@ class MHThermostat {
 			});
 
 		return [service, this.thermostatService];
+	}	
+}
+
+class MHThermometer {
+	constructor(log, config) {
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("thermometer-%s",config.address));
+		this.log = log;
+		
+		this.ambient = -1;
+		this.log.info(sprintf("LegrandMyHome::MHThermometer create object: %s", this.address));
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Thermometer")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		this.thermometerService = new Service.TemperatureSensor(this.name);
+		this.thermometerService.getCharacteristic(Characteristic.CurrentTemperature).setProps({minValue: -50, minStep: 0.1, maxValue: 50})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getCurrentTemperature %s = %s",this.address, this.ambient));
+				callback(null, this.ambient);
+			});
+
+		return [service, this.thermometerService];
 	}	
 }
