@@ -54,6 +54,7 @@ class LegrandMyHome {
 			accessory.parent = this;
 			if (accessory.accessory == 'MHRelay') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHBlind') this.devices.push(new MHBlind(this.log,accessory))
+			if (accessory.accessory == 'MHBlindAdvanced') this.devices.push(new MHBlindAdvanced(this.log,accessory))
 			if (accessory.accessory == 'MHOutlet') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHRelayLight') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHDimmer') this.devices.push(new MHDimmer(this.log,accessory))
@@ -74,6 +75,7 @@ class LegrandMyHome {
 		this.devices.forEach(function (accessory) {
 			if (accessory.thermostatService !== undefined) this.controller.getThermostatStatus(accessory.address);
 			if (accessory.contactSensorService !== undefined) this.controller.getContactState(accessory.address);
+			if (accessory.windowCoveringPlusService !== undefined) this.controller.getAdvancedBlindSate(accessory.address);
 		}.bind(this));
 	}
 
@@ -126,6 +128,19 @@ class LegrandMyHome {
 				accessory.windowCoveringService.getCharacteristic(Characteristic.PositionState).getValue(null);
 				accessory.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
 				accessory.windowCoveringService.getCharacteristic(Characteristic.TargetPosition).getValue(null);
+			}
+		}.bind(this));
+	}
+
+	onAdvancedBlind(_address,_position) {
+		this.devices.forEach(function(accessory) { 
+			if (accessory.address == _address && accessory.windowCoveringPlusService !== undefined) {
+				accessory.position = _position;
+				accessory.targetPosition = _position;
+				accessory.state = Characteristic.PositionState.STOPPED;
+				accessory.windowCoveringPlusService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
+				accessory.windowCoveringPlusService.getCharacteristic(Characteristic.TargetPosition).getValue(null);
+				accessory.windowCoveringPlusService.getCharacteristic(Characteristic.PositionState).getValue(null);
 			}
 		}.bind(this));
 	}
@@ -189,6 +204,8 @@ class MHRelay {
 		this.mh = config.parent.controller;
 		this.name = config.name;
 		this.address = config.address;
+		this.groups = config.groups || []; 		/* TODO */
+		this.pul = false; 						/* TODO */
 		this.displayName = config.name;
 		this.UUID = UUIDGen.generate(sprintf("relay-%s",config.address));
 		this.log = log;
@@ -211,7 +228,6 @@ class MHRelay {
 			case 'MHRelayOutlet':
 				this.lightBulbService = new Service.Outlet(this.name);
 				break;
-		
 			default:
 				this.lightBulbService = new Service.Lightbulb(this.name);
 				break;
@@ -241,9 +257,11 @@ class MHBlind {
 		this.mh = config.parent.controller;
 		this.name = config.name;
 		this.address = config.address;
+		this.groups = config.groups || []; 		/* TODO */
+		this.pul = false; 						/* TODO */
 		this.displayName = config.name;
 		this.time = config.time || 0;
-		this.UUID = UUIDGen.generate(sprintf("blind--%s",config.address));
+		this.UUID = UUIDGen.generate(sprintf("blind-%s",config.address));
 		this.log = log;
 		
 		this.runningStartTime = -1;
@@ -295,18 +313,12 @@ class MHBlind {
 		this.windowCoveringService = new Service.WindowCovering(this.name);
 
 		this.windowCoveringService.getCharacteristic(Characteristic.PositionState)
-			.on('set', (value, callback) => {
-				callback(null);
-			})
 			.on('get', (callback) => {
 				this.log.debug(sprintf("getPositionState %s = %s",this.address, this.state));
 				callback(null, this.state);
 			});
 
 		this.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition)
-			.on('set', (value, callback) => {
-				callback(null);
-			})
 			.on('get', (callback) => {
 				this.log.debug(sprintf("getCurrentPosition %s = %s",this.address, this.state));
 				callback(null, this.currentPosition);
@@ -341,12 +353,77 @@ class MHBlind {
 	}
 }
 
+class MHBlindAdvanced {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.groups = config.groups || []; 		/* TODO */
+		this.pul = false; 						/* TODO */
+		this.displayName = config.name;
+		//this.time = config.time || 0;
+		this.UUID = UUIDGen.generate(sprintf("blindplus-%s",config.address));
+		this.log = log;
+		
+		this.state = Characteristic.PositionState.STOPPED;
+		this.currentPosition = 0;
+		this.targetPosition = 0;
+		this.log.info(sprintf("LegrandMyHome::MHBlindAdvanced create object: %s", this.address));
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Advanced Blind")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		this.windowCoveringPlusService = new Service.WindowCovering(this.name);
+
+		this.windowCoveringPlusService.getCharacteristic(Characteristic.PositionState)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getPositionState %s = %s",this.address, this.state));
+				callback(null, this.state);
+			});
+
+		this.windowCoveringPlusService.getCharacteristic(Characteristic.CurrentPosition)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getCurrentPosition %s = %s",this.address, this.state));
+				callback(null, this.currentPosition);
+			});			
+
+		this.windowCoveringPlusService.getCharacteristic(Characteristic.TargetPosition)
+			.on('set', (value, callback) => {
+				this.targetPosition = value;
+				if (this.targetPosition == this.currentPosition) {
+					this.state = Characteristic.PositionState.STOPPED;
+				} else if (this.targetPosition > this.currentPosition) {
+					this.state = Characteristic.PositionState.INCREASING;
+				} else {
+					this.state = Characteristic.PositionState.DECREASING;
+				}
+				this.mh.advancedBlindCommand(this.address,this.targetPosition);
+				this.windowCoveringPlusService.getCharacteristic(Characteristic.PositionState).getValue(null);
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getTargetPosition %s = %s",this.address, this.targetPosition));
+				callback(null, this.targetPosition);
+			});
+
+		return [service, this.windowCoveringPlusService];
+	}
+}
+
 class MHDimmer {
 	constructor(log, config) {
 		this.config = config || {};
 		this.mh = config.parent.controller;
 		this.name = config.name;
 		this.address = config.address;
+		this.groups = config.groups || []; 		/* TODO */
+		this.pul = false; 						/* TODO */
 		this.displayName = config.name;
 		this.UUID = UUIDGen.generate(sprintf("dimmer-%s",config.address));
 		this.log = log;

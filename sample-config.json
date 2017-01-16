@@ -42,6 +42,15 @@
             "name": "Sample Curtain",
             "address": "0/6/3",
             "time": 10
+            },{
+            "accessory": "MHBlindAdvanced",
+            "name": "Sample Advanced Curtain",
+            "address": "0/6/4"
+            },{
+            "accessory": "MHPowerMeter",
+            "name": "Sample Meter",
+            "address": "0/6/3",
+            "time": 10
             }]
         }],
     "bridge": {

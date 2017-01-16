@@ -9,9 +9,8 @@ Legrand MyHome (http://www.homesystems-legrandgroup.com/BtHomeSystems/home.actio
 
 With this plugin, the support of a IP gateway installed in your plant and a configuration of all installed 
 systems (MyHome does not support the autodiscovery of the system) you can control it. You need to disable the OpenWebNet password-based
-authentication from the IP of the device that runs homebridge (ie. Raspberry) or set the auhentication to HMAC; this software does not 
-support the proprietary "OWN" encryption schema even if was reverse-engineered and published on a wiki years ago. HMAC authentication is
-supported by all recent IP gateways or older one with updated firmware (eg. F454 with v2 firmware).
+authentication from the IP of the device that runs homebridge (ie. Raspberry) or set the auhentication to HMAC; 
+HMAC authentication is supported by all recent IP gateways or older one with updated firmware (eg. F454 with v2 firmware).
 
 # Installation (TBD)
 Install plugin with npm install -g homebridge-myhome
@@ -40,7 +39,7 @@ Add platform within config.json of you homebridge instance:
 Restart homebridge
 Enjoy!
 
-# Installation (TBD)
+# Installation
 
 Run as root:
 
@@ -167,7 +166,7 @@ The devices section contains the list of devices that will be managed. All devic
 * MHOutlet: Standard (not-Lighting) Relay, address is B/A/PL (eg. 0/1/10)
 * MHBlind: Standard Automation Relay (eg. F411, I need to check the F401), address is B/A/PL (eg. 0/1/10)
   * this device defines another property called "time" that defines the configured "stop time" in seconds; using this property the driver can evaluate the current position of the blind
-
+* MHBlindAdvanced: Advanced version of standard Blind (eg. F401 that manages internally the current position), address is B/A/PL (eg. 0/1/10)
 * MHContactSensor: Dry Contact sensor (eg. 3477 or some burgalarm sensors), address range is 1-201
 * MHPowerMeter: (WILL BE SUPPORTED)
 * MHAlarm: (WILL BE SUPPORTED)
@@ -175,9 +174,15 @@ The devices section contains the list of devices that will be managed. All devic
 ## Tested devices
 - F454v1 and MH201 as IP Gateway
 - F411/2 as MHRelay, MHOutlet and MHCurtain
+- F401 as MHBlindAdvanced
 - F416U1 as MHDimmer
 - 3455 as MHExternalThermometer
 - 3477 as MHContactSensor
+
+## Known Bug List
+
+- MHBlindAdvanced reports a wrong running state
+- Groups are not managed
 
 # TODOS
 
@@ -185,7 +190,7 @@ The devices section contains the list of devices that will be managed. All devic
 - Semi-auto discovery and/or read a plant configuration from MyHomeSuite configuration file
 - Re-order the code
 - IP Gateway discovery
-- Group support
+- Group and General Command support
 
 # Disclaimer
 
