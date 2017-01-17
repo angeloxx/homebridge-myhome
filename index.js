@@ -132,15 +132,28 @@ class LegrandMyHome {
 		}.bind(this));
 	}
 
-	onAdvancedBlind(_address,_position) {
+	onAdvancedBlind(_address,_action,_position) {
 		this.devices.forEach(function(accessory) { 
 			if (accessory.address == _address && accessory.windowCoveringPlusService !== undefined) {
-				accessory.position = _position;
-				accessory.targetPosition = _position;
-				accessory.state = Characteristic.PositionState.STOPPED;
-				accessory.windowCoveringPlusService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
-				accessory.windowCoveringPlusService.getCharacteristic(Characteristic.TargetPosition).getValue(null);
-				accessory.windowCoveringPlusService.getCharacteristic(Characteristic.PositionState).getValue(null);
+				if (_action == "STOP") {
+					accessory.currentPosition = accessory.targetPosition = _position;
+					accessory.windowCoveringPlusService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
+					accessory.windowCoveringPlusService.getCharacteristic(Characteristic.TargetPosition).getValue(null);
+					accessory.state = Characteristic.PositionState.STOPPED;
+					accessory.windowCoveringPlusService.getCharacteristic(Characteristic.PositionState).getValue(null);
+				} else if (_action == "UP") {
+					accessory.currentPosition = _position;
+					accessory.windowCoveringPlusService.getCharacteristic(Characteristic.TargetPosition).getValue(null);
+
+					accessory.state = Characteristic.PositionState.INCREASING;
+					accessory.windowCoveringPlusService.getCharacteristic(Characteristic.PositionState).getValue(null);
+				} else if (_action == "DOWN") {
+					accessory.currentPosition = _position;
+					accessory.windowCoveringPlusService.getCharacteristic(Characteristic.TargetPosition).getValue(null);
+
+					accessory.state = Characteristic.PositionState.DECREASING;
+					accessory.windowCoveringPlusService.getCharacteristic(Characteristic.PositionState).getValue(null);
+				}
 			}
 		}.bind(this));
 	}
@@ -383,7 +396,7 @@ class MHBlindAdvanced {
 
 		this.windowCoveringPlusService.getCharacteristic(Characteristic.PositionState)
 			.on('get', (callback) => {
-				this.log.debug(sprintf("getPositionState %s = %s",this.address, this.state));
+				this.log.info(sprintf("getPositionState %s = %s",this.address, this.state));
 				callback(null, this.state);
 			});
 
@@ -391,7 +404,7 @@ class MHBlindAdvanced {
 			.on('get', (callback) => {
 				this.log.debug(sprintf("getCurrentPosition %s = %s",this.address, this.state));
 				callback(null, this.currentPosition);
-			});			
+			});
 
 		this.windowCoveringPlusService.getCharacteristic(Characteristic.TargetPosition)
 			.on('set', (value, callback) => {

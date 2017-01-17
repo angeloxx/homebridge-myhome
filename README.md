@@ -181,7 +181,6 @@ The devices section contains the list of devices that will be managed. All devic
 
 ## Known Bug List
 
-- MHBlindAdvanced reports a wrong running state
 - Groups are not managed
 
 # TODOS
