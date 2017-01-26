@@ -168,7 +168,7 @@ class LegrandMyHome {
 				if (_measure == "SETPOINT") {
 					accessory.setpoint = _level;
 					accessory.thermostatService.getCharacteristic(Characteristic.TargetTemperature).getValue(null);
-					accessory.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).getValue(null);
+					// accessory.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).getValue(null);
 				}
 				if (_measure == "HEATING") {
 					if (_level == true) {
@@ -177,8 +177,8 @@ class LegrandMyHome {
 						if (accessory.state != Characteristic.CurrentHeatingCoolingState.COOL)
 							accessory.state = Characteristic.CurrentHeatingCoolingState.OFF;
 					}
-					accessory.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState).getValue(null);
 					accessory.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).getValue(null);
+					accessory.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState).getValue(null);
 				}
 				if (_measure == "COOLING") {
 					if (_level == true) {
@@ -187,8 +187,8 @@ class LegrandMyHome {
 						if (accessory.state != Characteristic.CurrentHeatingCoolingState.HEAT)
 							accessory.state = Characteristic.CurrentHeatingCoolingState.OFF;
 					}
-					accessory.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState).getValue(null);
 					accessory.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).getValue(null);
+					accessory.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState).getValue(null);
 				}
 			}
 		}.bind(this));		
@@ -522,7 +522,7 @@ class MHThermostat {
 
 		this.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState)
 			.on('get', (callback) => {
-				this.log.debug(sprintf("getCurrentHeatingCoolingState %s = %s",this.address, this.state));
+				this.log.info(sprintf("getCurrentHeatingCoolingState %s = %s",this.address, this.state));
 				callback(null, this.state);
 			}).on('set', (value,callback) => {
 				callback(null);
@@ -530,14 +530,21 @@ class MHThermostat {
 
 		this.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState)
 			.on('get', (callback) => {
-				this.log.debug(sprintf("getTargetHeatingCoolingState %s = %s",this.address, this.state));
-				if (parseInt(this.setpoint,10) > parseInt(this.ambient,10)) {
+				this.log.info(sprintf("getTargetHeatingCoolingState %s = %s",this.address, this.state));
+				callback(null, this.state);
+				
+				/*
+				USELESS: target will turn on the "led" status of the UI so we 
+				prefer to notify the real state of the actuator (if installed)
+
+				if (parseFloat(this.setpoint) > parseFloat(this.ambient)) {
 					callback(null, Characteristic.TargetHeatingCoolingState.HEAT);
-				} else if (parseInt(this.setpoint,10) < parseInt(this.ambient,10)) {
+				} else if (parseFloat(this.setpoint) < parseFloat(this.ambient)) {
 					callback(null, Characteristic.TargetHeatingCoolingState.COOL);
 				} else {
 					callback(null, Characteristic.TargetHeatingCoolingState.OFF);
 				}
+				*/
 			}).on('set', (value,callback) => {
 				this.state = value;
 				this.log.debug(sprintf("setTargetHeatingCoolingState %s = %s",this.address, this.state));
