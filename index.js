@@ -61,6 +61,7 @@ class LegrandMyHome {
 			if (accessory.accessory == 'MHThermostat') this.devices.push(new MHThermostat(this.log,accessory))
 			if (accessory.accessory == 'MHExternalThermometer') this.devices.push(new MHThermometer(this.log,accessory))
 			if (accessory.accessory == 'MHContactSensor') this.devices.push(new MHContactSensor(this.log,accessory))
+			if (accessory.accessory == 'MHButton') this.devices.push(new MHButton(this.log,accessory))
 			/* if (accessory.accessory == 'MHPowerMeter') this.devices.push(new MHPowerMeter(this.log,accessory)) */
 		}.bind(this));
 		this.log.info("LegrandMyHome for MyHome Gateway at " + config.ipaddress + ":" + config.port);
@@ -658,5 +659,47 @@ class MHPowerMeter {
 				callback(null, this.value);
 			});
 		return [service, this.powerMeterService];
+	}	
+}
+
+class MHButton {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("button-%s",config.address));
+		this.log = log;
+		
+		this.value = 0;
+		this.log.info(sprintf("LegrandMyHome::MHButton (CEN/CEN+) create object: %s", this.address));
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "CEN/CEN+")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		this.statelessSwitch = new Service.StatefulProgrammableSwitch(this.name);
+		this.statelessSwitch.getCharacteristic(Characteristic.ProgrammableSwitchEvent)
+			.on('get', (callback) => {
+				// this.log.info(sprintf("setProgrammableSwitchEvent %s = %s",this.address, value));
+				callback(null,0);
+			});
+		this.statelessSwitch.getCharacteristic(Characteristic.ProgrammableSwitchOutputState)
+			.on('get', (callback) => {
+				// this.log.info(sprintf("setProgrammableSwitchEvent %s = %s",this.address, value));
+				callback(null,0);
+			})		
+			.on('set', (callback,value) => {
+				this.log.info(sprintf("setProgrammableSwitchOutputState %s = %s",this.address, value));
+				callback(null);
+			});
+
+			
+		return [service, this.statelessSwitch];
 	}	
 }
