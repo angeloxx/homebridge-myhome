@@ -160,10 +160,23 @@ The devices section contains the list of devices that will be managed. All devic
 ## Supported devices
 
 * MHRelay: Standard (Lighting) Relay (eg. F411), address is B/A/PL (eg. 0/1/10)
+  * this device supports the definition of a custom frame for on and off command, so you can specify frame\_on and/or frame\_off:
+
+            {
+            "accessory": "MHRelay",
+            "name": "Bathroom Light",
+            "address": "0/1/5",
+            "frame_on": "*1*1*14##",
+            "frame_off": "*1*0*14##"
+            }
+    
+    to use a Group, CEN, CEN+ or other command to turn on and off that load, using the _address_ load for the status monitor. Remember that HomeKit will think that the load has changed the status after the command even if is not true.
+
+
 * MHDimmer: Lighting Dimmer (eg. F427, F413N), address is B/A/PL (eg. 0/1/10)
 * MHThermostat: Standard Thermostat controlled by a 99-Zones Central Station (code 3550), address is the Zone Identifier (1-99)
 * MHExternalThermometer: External Probe controlled by a 99-Zones Central Station (code 3550), address is the Zone Identifier (1-9)
-* MHOutlet: Standard (not-Lighting) Relay, address is B/A/PL (eg. 0/1/10)
+* MHOutlet: Standard (not-Lighting) Relay, address is B/A/PL (eg. 0/1/10). See MHRelay for custom frame support
 * MHBlind: Standard Automation Relay (eg. F411, I need to check the F401), address is B/A/PL (eg. 0/1/10)
   * this device defines another property called "time" that defines the configured "stop time" in seconds; using this property the driver can evaluate the current position of the blind
 * MHBlindAdvanced: Advanced version of standard Blind (eg. F401 that manages internally the current position), address is B/A/PL (eg. 0/1/10)
