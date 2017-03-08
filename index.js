@@ -239,7 +239,7 @@ class MHRelay {
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		switch (this.config.accessory) {
-			case 'MHRelayOutlet':
+			case 'MHOutlet':
 				this.lightBulbService = new Service.Outlet(this.name);
 				break;
 			default:
