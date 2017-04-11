@@ -10,8 +10,10 @@ module.exports = function (homebridge) {
 	Accessory = homebridge.platformAccessory;
 	UUIDGen = homebridge.hap.uuid;
 
+<<<<<<< HEAD
+=======
 
-
+>>>>>>> 02a5df3228d8ccd492f12427f0a81976d2cf64c8
 	/* Try to map Elgato's outlet custom vars */
 	LegrandMyHome.CurrentPowerConsumption = function() {
 		Characteristic.call(this, 'Consumption', 'E863F10D-079E-48FF-8F27-9C2605A29F52');
@@ -239,7 +241,7 @@ class MHRelay {
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		switch (this.config.accessory) {
-			case 'MHRelayOutlet':
+			case 'MHOutlet':
 				this.lightBulbService = new Service.Outlet(this.name);
 				break;
 			default:
