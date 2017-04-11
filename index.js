@@ -12,8 +12,6 @@ module.exports = function (homebridge) {
 
 
 
-ciccio
-
 	/* Try to map Elgato's outlet custom vars */
 	LegrandMyHome.CurrentPowerConsumption = function() {
 		Characteristic.call(this, 'Consumption', 'E863F10D-079E-48FF-8F27-9C2605A29F52');
