@@ -11,7 +11,6 @@ module.exports = function (homebridge) {
 	UUIDGen = homebridge.hap.uuid;
 
 
-
 	/* Try to map Elgato's outlet custom vars */
 	LegrandMyHome.CurrentPowerConsumption = function() {
 		Characteristic.call(this, 'Consumption', 'E863F10D-079E-48FF-8F27-9C2605A29F52');
@@ -27,11 +26,98 @@ module.exports = function (homebridge) {
 		};
 		LegrandMyHome.CurrentPowerConsumption.UUID = 'E863F10D-079E-48FF-8F27-9C2605A29F52';
 	inherits(LegrandMyHome.CurrentPowerConsumption, Characteristic);
+
+	LegrandMyHome.TotalConsumption = function() {
+		Characteristic.call(this, 'Energy', 'E863F10C-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.FLOAT,
+			unit: "kWh",
+			maxValue: 100000000000,
+			minValue: 0,
+			minStep: 0.001,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
+		});
+		this.value = this.getDefaultValue();
+		};
+		LegrandMyHome.TotalConsumption.UUID = 'E863F10C-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.TotalConsumption, Characteristic);
+
+	LegrandMyHome.E863F116 = function() {
+		Characteristic.call(this, 'ReadTrunk1', 'E863F116-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.DATA,
+			perms: [Characteristic.Perms.READ]
+		});
+		this.value = this.getDefaultValue();
+		};
+		LegrandMyHome.E863F116.UUID = 'E863F116-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.E863F116, Characteristic);
+
+	LegrandMyHome.E863F117 = function() {
+		Characteristic.call(this, 'ReadTrunk2', 'E863F117-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.DATA,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE]
+		});
+		this.value = this.getDefaultValue();
+		};
+		LegrandMyHome.E863F117.UUID = 'E863F117-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.E863F117, Characteristic);
+
+
+	LegrandMyHome.E863F11C = function() {
+		Characteristic.call(this, 'WriteTrunk1', 'E863F11C-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.DATA,
+			perms: [Characteristic.Perms.WRITE]
+		});
+		this.value = null;
+		};
+		LegrandMyHome.E863F11C.UUID = 'E863F11C-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.E863F11C, Characteristic);
+
+	LegrandMyHome.E863F121 = function() {
+		Characteristic.call(this, 'WriteTrunk2', 'E863F121-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.DATA,
+			perms: [Characteristic.Perms.WRITE]
+		});
+		this.value = null;
+		};
+		LegrandMyHome.E863F121.UUID = 'E863F121-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.E863F121, Characteristic);
+
+
+
 	LegrandMyHome.PowerMeterService = function(displayName, subtype) {
 			Service.call(this, displayName, '00000001-0000-1777-8000-775D67EC4377', subtype);
 			this.addCharacteristic(LegrandMyHome.CurrentPowerConsumption);
+			this.addCharacteristic(LegrandMyHome.TotalConsumption);
+			this.addCharacteristic(Characteristic.ResetFilterIndication);
 	};
 	inherits(LegrandMyHome.PowerMeterService, Service);
+
+	LegrandMyHome.PowerLogging = function(displayName, subtype) {
+			Service.call(this, displayName, 'E863F007-079E-48FF-8F27-9C2605A29F52', subtype);
+			/*this.addCharacteristic(LegrandMyHome.E863F116);
+			this.addCharacteristic(LegrandMyHome.E863F117);
+			this.addCharacteristic(LegrandMyHome.E863F11C);
+			this.addCharacteristic(LegrandMyHome.E863F121);*/
+	};
+	inherits(LegrandMyHome.PowerLogging, Service);
+
+	LegrandMyHome.ControlledLoadService = function(displayName, subtype) {
+			Service.call(this, displayName, 'D43133F2-9BDE-4731-9FF2-B427189DCB4A', subtype);
+			this.addCharacteristic(Characteristic.OutletInUse);
+			this.addCharacteristic(Characteristic.Active);
+	};
+	inherits(LegrandMyHome.ControlledLoadService, Service);
+
+	LegrandMyHome.RainSensorService = function(displayName, subtype) {
+			Service.call(this, displayName, '9018CDC8-DEF9-49D5-A969-63F8CCAAB1A6', subtype);
+			this.addCharacteristic(Characteristic.CurrentRelativeHumidity);
+	};
+	inherits(LegrandMyHome.RainSensorService, Service);
 
 	process.setMaxListeners(0);
 	homebridge.registerPlatform("homebridge-myhome", "LegrandMyHome", LegrandMyHome);
@@ -48,7 +134,7 @@ class LegrandMyHome {
 		this.ready = false;
 		this.devices = [];
 		this.lightBuses = [];
-		this.controller = new mh.MyHomeClient(config.ipaddress, config.port, config.ownpassword, this);
+		this.controller = new mh.MyHomeClient(config.ipaddress, config.port, config.ownpassword, config.setclock, this);
 		this.config.devices.forEach(function (accessory) {
 			this.log.info("LegrandMyHome: adds accessory");
 			accessory.parent = this;
@@ -56,13 +142,19 @@ class LegrandMyHome {
 			if (accessory.accessory == 'MHBlind') this.devices.push(new MHBlind(this.log,accessory))
 			if (accessory.accessory == 'MHBlindAdvanced') this.devices.push(new MHBlindAdvanced(this.log,accessory))
 			if (accessory.accessory == 'MHOutlet') this.devices.push(new MHRelay(this.log,accessory))
-			if (accessory.accessory == 'MHRelayLight') this.devices.push(new MHRelay(this.log,accessory))
+			if (accessory.accessory == 'MHTimedRelay') this.devices.push(new MHTimedRelay(this.log,accessory))
+			if (accessory.accessory == 'MHRain') this.devices.push(new MHRain(this.log,accessory))
 			if (accessory.accessory == 'MHDimmer') this.devices.push(new MHDimmer(this.log,accessory))
 			if (accessory.accessory == 'MHThermostat') this.devices.push(new MHThermostat(this.log,accessory))
 			if (accessory.accessory == 'MHExternalThermometer') this.devices.push(new MHThermometer(this.log,accessory))
-			if (accessory.accessory == 'MHContactSensor') this.devices.push(new MHContactSensor(this.log,accessory))
+		
+			if (accessory.accessory == 'MHDryContact') this.devices.push(new MHDryContact(this.log,accessory))
+			if (accessory.accessory == 'MHAux') this.devices.push(new MHAux(this.log,accessory))
+			
 			/* if (accessory.accessory == 'MHButton') this.devices.push(new MHButton(this.log,accessory)) */
-			/* if (accessory.accessory == 'MHPowerMeter') this.devices.push(new MHPowerMeter(this.log,accessory)) */
+			if (accessory.accessory == 'MHPowerMeter') this.devices.push(new MHPowerMeter(this.log,accessory))
+			if (accessory.accessory == 'MHAlarm') this.devices.push(new MHAlarm(this.log,accessory))
+			if (accessory.accessory == 'MHControlledLoad') this.devices.push(new MHControlledLoad(this.log,accessory))
 		}.bind(this));
 		this.log.info("LegrandMyHome for MyHome Gateway at " + config.ipaddress + ":" + config.port);
 		this.controller.start();
@@ -75,19 +167,72 @@ class LegrandMyHome {
 	onConnect() {
 		this.devices.forEach(function (accessory) {
 			if (accessory.thermostatService !== undefined) this.controller.getThermostatStatus(accessory.address);
-			if (accessory.contactSensorService !== undefined) this.controller.getContactState(accessory.address);
-			if (accessory.windowCoveringPlusService !== undefined) this.controller.getAdvancedBlindSate(accessory.address);
+			if (accessory.contactSensorService !== undefined || accessory.dryContactService !== undefined) this.controller.getContactState(accessory.address);
+			if (accessory.windowCoveringPlusService !== undefined) this.controller.getAdvancedBlindState(accessory.address);
+			if (accessory.lightBulbService !== undefined && accessory.pul == true)
+				this.controller.getRelayState(accessory.address);
+			if (accessory.rainService !== undefined && accessory.pul == true)
+				this.controller.getRelayState(accessory.address);
+			if (accessory.alarmService !== undefined)
+				this.controller.getAlarmState();
 		}.bind(this));
 	}
 
 	onRelay(_address,_onoff) {
-		this.devices.forEach(function(accessory) {
-			if (accessory.address == _address && accessory.lightBulbService !== undefined) {
-				accessory.power = _onoff;
-				accessory.bri = _onoff * 100;
-				accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
-			}
-		}.bind(this));
+
+		var address = _address.split("/"); 
+        if (address.length != 3) return "";
+        var a = parseInt(address[1]), pl = parseInt(address[2]);
+
+		if (pl!=0)
+			this.devices.forEach(function(accessory) {
+				if (accessory.address == _address && accessory.lightBulbService !== undefined) {
+					accessory.power = _onoff;
+					accessory.bri = _onoff * 100;
+					accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
+				}
+				if (accessory.address == _address && accessory.rainService !== undefined) {
+					accessory.power = _onoff;
+					accessory.rainService.getCharacteristic(Characteristic.CurrentRelativeHumidity).getValue(null);
+				}
+				if (accessory.address == _address && accessory.OutletService !== undefined) {
+					accessory.power = _onoff;
+					accessory.OutletService.getCharacteristic(Characteristic.On).getValue(null);
+				}
+			}.bind(this));
+		else
+			if (a==0)
+				this.devices.forEach(function(accessory) {
+					if (accessory.lightBulbService !== undefined && accessory.pul == false) {
+						accessory.power = _onoff;
+						accessory.bri = _onoff * 100;
+						accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
+					}
+					if (accessory.address == _address && accessory.rainService !== undefined) {
+						accessory.power = _onoff;
+						accessory.rainService.getCharacteristic(Characteristic.CurrentRelativeHumidity).getValue(null);
+					}
+					if (accessory.address == _address && accessory.OutletService !== undefined) {
+						accessory.power = _onoff;
+						accessory.OutletService.getCharacteristic(Characteristic.On).getValue(null);
+					}
+				}.bind(this));
+			else
+				this.devices.forEach(function(accessory) {
+					if (accessory.ambient == a && accessory.lightBulbService !== undefined && accessory.pul == false) {
+						accessory.power = _onoff;
+						accessory.bri = _onoff * 100;
+						accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
+					}
+					if (accessory.address == _address && accessory.rainService !== undefined) {
+						accessory.power = _onoff;
+						accessory.rainService.getCharacteristic(Characteristic.CurrentRelativeHumidity).getValue(null);
+					}
+					if (accessory.address == _address && accessory.OutletService !== undefined) {
+						accessory.power = _onoff;
+						accessory.OutletService.getCharacteristic(Characteristic.On).getValue(null);
+					}
+				}.bind(this));
 	}
 
 	onContactSensor(_address,_state) {
@@ -98,39 +243,332 @@ class LegrandMyHome {
 			}
 		}.bind(this));
 	}	
-
-	onDimmer(_address,_level) {
+	
+	onDryContact(_address,_state) {
 		this.devices.forEach(function(accessory) {
-			if (accessory.address == _address && accessory.lightBulbService !== undefined) {
-				accessory.power = (_level > 0) ? 1 : 0;
-				accessory.bri = _level;
-				accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
+			if (accessory.address == _address && accessory.dryContactService !== undefined) {
+				accessory.state = _state;
+			    switch (accessory.type) {
+				case 'Contact':	accessory.dryContactService.getCharacteristic(Characteristic.ContactSensorState).getValue(null);
+					break;
+				case 'Leak':	accessory.dryContactService.getCharacteristic(Characteristic.LeakDetected).getValue(null);
+					break;
+				case 'Motion':	accessory.dryContactService.getCharacteristic(Characteristic.MotionDetected).getValue(null);
+					break;
+				default:	accessory.dryContactService.getCharacteristic(Characteristic.ContactSensorState).getValue(null);
+					break;
+				}	
+			}
+		}.bind(this));
+	}
+	
+	onAUX(_address,_state) {
+		this.devices.forEach(function(accessory) {
+			if (accessory.address == _address && accessory.AUXService !== undefined) {
+				accessory.state = _state;
+			    switch (accessory.type) {
+				case 'Contact':	accessory.AUXService.getCharacteristic(Characteristic.ContactSensorState).getValue(null);
+					break;
+				case 'Leak':	accessory.AUXService.getCharacteristic(Characteristic.LeakDetected).getValue(null);
+					break;
+				case 'Motion':	accessory.AUXService.getCharacteristic(Characteristic.MotionDetected).getValue(null);
+					break;
+				case 'Gas':	accessory.AUXService.getCharacteristic(Characteristic.CarbonMonoxideDetected).getValue(null);
+					break;
+				default:	accessory.AUXService.getCharacteristic(Characteristic.ContactSensorState).getValue(null);
+					break;
+				}	
 			}
 		}.bind(this));
 	}
 
-	onSimpleBlind(_address,_value) {
-		this.devices.forEach(function(accessory) {
-			if (accessory.address == _address && accessory.windowCoveringService !== undefined) {
-				switch (_value) {
-					case 0:
-						accessory.state = Characteristic.PositionState.STOPPED;
-						accessory.evaluatePosition();
-						break;
-					case 1:
-						accessory.state = Characteristic.PositionState.INCREASING;
-						accessory.evaluatePosition();
-						break;
-					case 2:
-						accessory.state = Characteristic.PositionState.DECREASING;
-						accessory.evaluatePosition();
-						break;
+	onDimmer(_address,_level) {
+		var address = _address.split("/"); 
+        if (address.length != 3) return "";
+        var a = parseInt(address[1]), pl = parseInt(address[2]);
+		
+		if (pl!=0)
+			this.devices.forEach(function(accessory) {
+				if (accessory.address == _address && accessory.lightBulbService !== undefined) {
+					accessory.power = (_level > 0) ? 1 : 0;
+					accessory.bri = _level;
+					accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
+					accessory.lightBulbService.getCharacteristic(Characteristic.Brightness).getValue(null);
 				}
-				accessory.windowCoveringService.getCharacteristic(Characteristic.PositionState).getValue(null);
-				accessory.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
-				accessory.windowCoveringService.getCharacteristic(Characteristic.TargetPosition).getValue(null);
+			}.bind(this));
+		else
+			if (a==0)
+				this.devices.forEach(function(accessory) {
+					if (accessory.lightBulbService !== undefined && accessory.pul == false) {
+						accessory.power = (_level > 0) ? 1 : 0;
+						accessory.bri = _level;
+						accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
+						accessory.lightBulbService.getCharacteristic(Characteristic.Brightness).getValue(null);
+					}
+				}.bind(this));
+			else
+				this.devices.forEach(function(accessory) {
+					if (accessory.ambient == a && accessory.lightBulbService !== undefined && accessory.pul == false) {
+						accessory.power = (_level > 0) ? 1 : 0;
+						accessory.bri = _level;
+						accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
+						accessory.lightBulbService.getCharacteristic(Characteristic.Brightness).getValue(null);
+					}
+				}.bind(this));
+	}
+
+	onPowerMeter(_value) {
+		this.devices.forEach(function(accessory) {
+			if (accessory.powerMeterService !== undefined) {
+				accessory.value  = _value;
+				accessory.totalenergy = accessory.totalenergy + _value * accessory.refresh / 3600 / 1000;
+				accessory.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption).getValue(null);
+				accessory.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption).getValue(null);
 			}
 		}.bind(this));
+	}
+
+	onAlarm(_state) {
+		this.devices.forEach(function(accessory) {
+			if (accessory.alarmService !== undefined) {
+				if (_state==3)
+				{
+					accessory.active = false;
+					accessory.triggered = false;
+				}
+				else
+					if (_state==1)
+						accessory.active = true;
+				if (_state == 4)
+					accessory.triggered = true;
+				if ((accessory.active==true && _state!=1))
+				{
+					accessory.state  = _state;
+					accessory.alarmService.getCharacteristic(Characteristic.SecuritySystemCurrentState).getValue(null);
+				}
+				if ((accessory.active==false && _state!=4))
+				{
+					accessory.state  = _state;
+					accessory.alarmService.getCharacteristic(Characteristic.SecuritySystemCurrentState).getValue(null);
+				}
+				
+				if (_state != 4)
+				{	
+					accessory.target = _state;
+					accessory.alarmService.getCharacteristic(Characteristic.SecuritySystemTargetState).getValue(null);
+				}
+			}
+		}.bind(this));
+	}
+
+	onAlarmFault(_state){
+		this.devices.forEach(function(accessory) {
+			if (accessory.alarmService !== undefined) {
+				accessory.fault  = _state;
+				accessory.alarmService.getCharacteristic(Characteristic.StatusFault).getValue(null);
+			}
+		}.bind(this));
+
+	}
+
+	onAlarmTampered(_state){
+		this.devices.forEach(function(accessory) {
+			if (accessory.alarmService !== undefined) {
+				accessory.tampered  = _state;
+				accessory.alarmService.getCharacteristic(Characteristic.StatusTampered).getValue(null);
+			}
+		}.bind(this));
+
+	}
+
+	onZoneActive(_zone, _state)
+	{
+		this.devices.forEach(function(accessory) {
+			if (accessory.alarmService !== undefined) {
+				accessory.zone[_zone]  = _state;
+				if (accessory.zone[0] == true &&  
+						accessory.zone[1] == true &&
+						accessory.zone[2] == true &&
+						accessory.zone[3] == true &&
+						accessory.zone[4] == false &&
+						accessory.zone[5] == false &&
+						accessory.zone[6] == false &&
+						accessory.zone[7] == false && 
+						accessory.active == true &&
+						accessory.triggered == false)
+				{
+					accessory.state = Characteristic.SecuritySystemCurrentState.AWAY_ARM;
+					accessory.target = Characteristic.SecuritySystemTargetState.AWAY_ARM;
+					accessory.alarmService.getCharacteristic(Characteristic.SecuritySystemCurrentState).getValue(null);
+					accessory.alarmService.getCharacteristic(Characteristic.SecuritySystemTargetState).getValue(null);
+				} 
+
+				else
+					if (accessory.zone[0] == true &&  
+							accessory.zone[1] == false &&
+							accessory.zone[2] == true &&
+							accessory.zone[3] == false &&
+							accessory.zone[4] == false &&
+							accessory.zone[5] == false &&
+							accessory.zone[6] == false &&
+							accessory.zone[7] == false && 
+							accessory.active == true &&
+							accessory.triggered == false)
+					{
+						accessory.state = Characteristic.SecuritySystemCurrentState.NIGHT_ARM;
+						accessory.target = Characteristic.SecuritySystemTargetState.NIGHT_ARM;
+						accessory.alarmService.getCharacteristic(Characteristic.SecuritySystemCurrentState).getValue(null);
+						accessory.alarmService.getCharacteristic(Characteristic.SecuritySystemTargetState).getValue(null);
+					} 
+					else
+						if (accessory.active == true && accessory.triggered == false)
+						{
+							accessory.state = Characteristic.SecuritySystemCurrentState.STAY_ARM;
+							accessory.target = Characteristic.SecuritySystemTargetState.STAY_ARM;
+							accessory.alarmService.getCharacteristic(Characteristic.SecuritySystemCurrentState).getValue(null);
+							accessory.alarmService.getCharacteristic(Characteristic.SecuritySystemTargetState).getValue(null);
+						} 		
+			}
+		}.bind(this));
+	}
+
+	onAlarmLowBattery(_state){
+		this.devices.forEach(function(accessory) {
+			if (accessory.alarmBatteryService !== undefined) {
+				accessory.lowbattery  = _state;
+				accessory.batterycharging = !_state;
+				if (_state==0)
+					accessory.batterylevel = 100;
+				else
+					accessory.batterylevel = 0;
+				accessory.alarmBatteryService.getCharacteristic(Characteristic.StatusLowBattery).getValue(null);
+				accessory.alarmBatteryService.getCharacteristic(Characteristic.BatteryLevel).getValue(null);
+				accessory.alarmBatteryService.getCharacteristic(Characteristic.ChargingState).getValue(null);
+			}
+		}.bind(this));
+
+	}
+
+	onControlledLoad(_address,_value){
+		this.devices.forEach(function(accessory) {
+			if (accessory.controlledLoad !== undefined)
+			{
+				if (accessory.address == _address)
+				{
+					switch (_value){
+						case 0:
+							accessory.enabled=false;
+							accessory.controlledLoad.getCharacteristic(Characteristic.OutletInUse).getValue(null);
+							break;
+						case 1:
+							accessory.enabled=true;
+							accessory.controlledLoad.getCharacteristic(Characteristic.OutletInUse).getValue(null);
+							break;
+						case 2:
+							accessory.forced=1;
+							accessory.controlledLoad.getCharacteristic(Characteristic.Active).getValue(null);
+							break;
+						case 3:
+							accessory.forced=0;
+							accessory.controlledLoad.getCharacteristic(Characteristic.Active).getValue(null);
+							break;
+					}
+				}
+			}
+		}.bind(this));
+	}
+	
+	onSimpleBlind(_address,_value) {
+		var address = _address.split("/"); 
+        if (address.length != 3) return "";
+        var a = parseInt(address[1]), pl = parseInt(address[2]);
+		
+		if (pl!=0)
+			this.devices.forEach(function(accessory) {
+				if (accessory.address == _address && accessory.windowCoveringService !== undefined) {
+					switch (_value) {
+						case 0:
+							accessory.state = Characteristic.PositionState.STOPPED;
+							accessory.evaluatePosition();
+							break;
+						case 1:
+							if (accessory.invert == false)
+								accessory.state = Characteristic.PositionState.INCREASING;
+							else
+								accessory.state = Characteristic.PositionState.DECREASING;
+							accessory.evaluatePosition();
+							break;
+						case 2:
+							
+							if (accessory.invert == false)
+								accessory.state = Characteristic.PositionState.DECREASING;
+							else
+								accessory.state = Characteristic.PositionState.INCREASING;
+							accessory.evaluatePosition();
+							break;
+					}
+					accessory.windowCoveringService.getCharacteristic(Characteristic.PositionState).getValue(null);
+					accessory.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
+					accessory.windowCoveringService.getCharacteristic(Characteristic.TargetPosition).getValue(null);
+				}
+			}.bind(this));
+		else
+			if (a==0)
+				this.devices.forEach(function(accessory) {
+					if (accessory.windowCoveringService !== undefined && accessory.pul == false) {
+						switch (_value) {
+							case 0:
+								accessory.state = Characteristic.PositionState.STOPPED;
+								accessory.evaluatePosition();
+								break;
+							case 1:
+								if (accessory.invert == false)
+									accessory.state = Characteristic.PositionState.INCREASING;
+								else
+									accessory.state = Characteristic.PositionState.DECREASING;
+								accessory.evaluatePosition();
+								break;
+							case 2:	
+								if (accessory.invert == false)
+									accessory.state = Characteristic.PositionState.DECREASING;
+								else
+									accessory.state = Characteristic.PositionState.INCREASING;
+								accessory.evaluatePosition();
+								break;
+						}
+						accessory.windowCoveringService.getCharacteristic(Characteristic.PositionState).getValue(null);
+						accessory.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
+						accessory.windowCoveringService.getCharacteristic(Characteristic.TargetPosition).getValue(null);
+					}
+				}.bind(this));
+			else
+				this.devices.forEach(function(accessory) {
+					if (accessory.ambient == a && accessory.windowCoveringService !== undefined && accessory.pul == false) {
+						switch (_value) {
+							case 0:
+								accessory.state = Characteristic.PositionState.STOPPED;
+								accessory.evaluatePosition();
+								break;
+							case 1:
+								if (accessory.invert == false)
+									accessory.state = Characteristic.PositionState.INCREASING;
+								else
+									accessory.state = Characteristic.PositionState.DECREASING;
+								accessory.evaluatePosition();
+								break;
+							case 2:
+								if (accessory.invert == false)
+									accessory.state = Characteristic.PositionState.DECREASING;
+								else
+									accessory.state = Characteristic.PositionState.INCREASING;
+								accessory.evaluatePosition();
+								break;
+						}
+						accessory.windowCoveringService.getCharacteristic(Characteristic.PositionState).getValue(null);
+						accessory.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
+						accessory.windowCoveringService.getCharacteristic(Characteristic.TargetPosition).getValue(null);
+					}
+				}.bind(this));
 	}
 
 	onAdvancedBlind(_address,_action,_position) {
@@ -219,7 +657,7 @@ class MHRelay {
 		this.name = config.name;
 		this.address = config.address;
 		this.groups = config.groups || []; 		/* TODO */
-		this.pul = false; 						/* TODO */
+		this.pul = config.pul || false; 						
 		this.displayName = config.name;
 		this.UUID = UUIDGen.generate(sprintf("relay-%s",config.address));
 		this.log = log;
@@ -229,6 +667,11 @@ class MHRelay {
 		this.hue = 0;
 		this.log.info(sprintf("LegrandMyHome::MHRelay create object: %s", this.address));
 		this.mh.addLightBusDevice(this.address);
+
+		var address = this.address.split("/"); 
+        this.bus = parseInt(address[0]);
+		this.ambient = parseInt(address[1]);
+		this.pl = parseInt(address[2]);
 	}
 
 	getServices() {
@@ -239,7 +682,7 @@ class MHRelay {
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		switch (this.config.accessory) {
-			case 'MHRelayOutlet':
+			case 'MHOutlet':
 				this.lightBulbService = new Service.Outlet(this.name);
 				break;
 			default:
@@ -247,6 +690,7 @@ class MHRelay {
 				break;
 		}
 
+		
 		this.lightBulbService.getCharacteristic(Characteristic.On)
 			.on('set', (level, callback) => {
 				this.log.debug(sprintf("setPower %s = %s",this.address, level));
@@ -269,7 +713,125 @@ class MHRelay {
 				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
 				callback(null, this.power);
 			});
+		
 		return [service, this.lightBulbService];
+	}
+}
+
+class MHTimedRelay {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.groups = config.groups || []; 		/* TODO */
+		this.pul = config.pul || false; 						
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("timedrelay-%s",config.address));
+		this.log = log;
+		this.power = false;
+		this.timer = config.timer || 1;
+		this.log.info(sprintf("LegrandMyHome::MHTimedRelay create object: %s", this.address));
+		this.mh.addLightBusDevice(this.address);
+
+		var address = this.address.split("/"); 
+        this.bus = parseInt(address[0]);
+		this.ambient = parseInt(address[1]);
+		this.pl = parseInt(address[2]);
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "TimedRelay")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		
+		this.OutletService = new Service.Outlet(this.name);
+		this.OutletService.addCharacteristic(Characteristic.LockManagementAutoSecurityTimeout);
+		this.OutletService.getCharacteristic(Characteristic.LockManagementAutoSecurityTimeout)
+		.setProps({
+			format: Characteristic.Formats.UINT32,
+			unit: Characteristic.Units.SECONDS,
+			maxValue: 3540,
+			minValue: 0,
+			minStep: 60,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
+		});
+		this.OutletService.getCharacteristic(Characteristic.On)
+			.on('set', (_value, callback) => {
+				//this.log.debug(sprintf("setPower %s = %s",this.address, level));
+				this.power = _value;
+	
+				/* Custom frame support */
+				if (this.power && this.timer !=0)
+				{
+					var address = this.mh._slashesToAddress(this.address);
+					this.mh.send(sprintf("*#1*%s*#2*0*%d*0##",address,this.timer/60));
+				}
+				else
+				{
+					this.mh.relayCommand(this.address,this.power)
+				}
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
+				callback(null, this.power);
+			});
+		this.OutletService.getCharacteristic(Characteristic.LockManagementAutoSecurityTimeout)
+			.on('set', (time, callback) => {
+				this.timer = time;
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
+				callback(null, this.timer);
+			});
+		
+		
+		return [service, this.OutletService];
+	}
+}
+
+class MHRain {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.groups = config.groups || []; 		/* TODO */
+		this.pul = config.pul || false; 						
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("relay-%s",config.address));
+		this.log = log;
+		this.power = 0;
+		this.log.info(sprintf("LegrandMyHome::MHRain create object: %s", this.address));
+		this.mh.addLightBusDevice(this.address);
+
+		var address = this.address.split("/"); 
+        this.bus = parseInt(address[0]);
+		this.ambient = parseInt(address[1]);
+		this.pl = parseInt(address[2]);
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Relay")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+	
+		this.rainService = new LegrandMyHome.RainSensorService(this.name);
+		this.rainService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
+			.on('get', (callback) => {
+				//this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
+				callback(null, 100 - this.power * 100);
+			});
+		
+		return [service, this.rainService];
 	}
 }
 
@@ -280,11 +842,12 @@ class MHBlind {
 		this.name = config.name;
 		this.address = config.address;
 		this.groups = config.groups || []; 		/* TODO */
-		this.pul = false; 						/* TODO */
+		this.pul = config.pul || false; 						
 		this.displayName = config.name;
 		this.time = config.time || 0;
 		this.UUID = UUIDGen.generate(sprintf("blind-%s",config.address));
 		this.log = log;
+		this.invert = config.invert || false;
 		
 		this.runningStartTime = -1;
 		this.runningDirection = Characteristic.PositionState.STOPPED;
@@ -294,16 +857,21 @@ class MHBlind {
 		this.startDelayMs = config.startDelayMs || 0; /* Start delay of the automation and MH relay */
 		this.timeAdjust = config.timeAdjust || 5; /* Percent error, F411 is a bit buggy */
 		this.log.info(sprintf("LegrandMyHome::MHBlind create object: %s", this.address));
+
+		var address = this.address.split("/"); 
+        this.bus = parseInt(address[0]);
+		this.ambient = parseInt(address[1]);
+		this.pl = parseInt(address[2]);
 	}
 
 	evaluatePosition() {
-		if (this.runningDirection == Characteristic.PositionState.STOPPED && this.currentPosition != Characteristic.PositionState.STOPPED) {
+		if (this.runningDirection == Characteristic.PositionState.STOPPED && this.state != Characteristic.PositionState.STOPPED) {
 			this.runningStartTime = new Date();
 			this.runningDirection = this.state;
 			this.log.debug(sprintf("Starting position is %d", this.currentPosition))
 		} else {
 			if (this.runningDirection != Characteristic.PositionState.STOPPED && this.state == Characteristic.PositionState.STOPPED) {
-				if (this.runningDirection == Characteristic.PositionState.INCREASING) {
+				if (this.runningDirection == 	Characteristic.PositionState.INCREASING) {
 					this.currentPosition = Math.min(100,this.currentPosition + (100 / (this.time*1000) * (((new Date())-this.runningStartTime+this.startDelayMs)*(1+this.timeAdjust/100))))
 				} else {
 					this.currentPosition = Math.max(0,this.currentPosition - (100 / (this.time*1000) * (((new Date())-this.runningStartTime+this.startDelayMs)*(1+this.timeAdjust/100))))
@@ -405,7 +973,7 @@ class MHBlindAdvanced {
 
 		this.windowCoveringPlusService.getCharacteristic(Characteristic.PositionState)
 			.on('get', (callback) => {
-				this.log.info(sprintf("getPositionState %s = %s",this.address, this.state));
+				this.log.debug(sprintf("getPositionState %s = %s",this.address, this.state));
 				callback(null, this.state);
 			});
 
@@ -445,7 +1013,7 @@ class MHDimmer {
 		this.name = config.name;
 		this.address = config.address;
 		this.groups = config.groups || []; 		/* TODO */
-		this.pul = false; 						/* TODO */
+		this.pul = config.pul || false; 						
 		this.displayName = config.name;
 		this.UUID = UUIDGen.generate(sprintf("dimmer-%s",config.address));
 		this.log = log;
@@ -455,6 +1023,11 @@ class MHDimmer {
 		this.sat = 0;
 		this.hue = 0;
 		this.log.info(sprintf("LegrandMyHome::MHRelay create object: %s", this.address));
+
+		var address = this.address.split("/"); 
+        this.bus = parseInt(address[0]);
+		this.ambient = parseInt(address[1]);
+		this.pl = parseInt(address[2]);
 	}
 
 	getServices() {
@@ -490,7 +1063,7 @@ class MHDimmer {
 				callback(null);
 			})
 			.on('get', (callback) => {
-				this.log(sprintf("getBrightness %s = %d",this.address, this.bri));
+				this.log.debug(sprintf("getBrightness %s = %d",this.address, this.bri));
 				callback(null, this.bri);
 			});			
 		return [service, this.lightBulbService];
@@ -607,51 +1180,28 @@ class MHThermometer {
 	}	
 }
 
-class MHContactSensor {
-	constructor(log, config) {
-		this.config = config || {};
-		this.mh = config.parent.controller;
-		this.name = config.name;
-		this.address = config.address;
-		this.displayName = config.name;
-		this.UUID = UUIDGen.generate(sprintf("contactsensor-%s",config.address));
-		this.log = log;
-		
-		this.state = false;
-		this.log.info(sprintf("LegrandMyHome::MHContactSensor create object: %s", this.address));
-	}
-
-	getServices() {
-		var service = new Service.AccessoryInformation();
-		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
-			.setCharacteristic(Characteristic.Model, "Contact Sensor")
-			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
-
-		this.contactSensorService = new Service.ContactSensor(this.name);
-		this.contactSensorService.getCharacteristic(Characteristic.ContactSensorState)
-			.on('get', (callback) => {
-				this.log.debug(sprintf("getContactSensorState %s = %s",this.address, this.state));
-				callback(null, this.state);
-			});
-
-		return [service, this.contactSensorService];
-	}	
-}
-
 class MHPowerMeter {
 	constructor(log, config) {
 		this.config = config || {};
 		this.mh = config.parent.controller;
 		this.name = config.name;
-		this.address = config.address;
 		this.displayName = config.name;
 		this.UUID = UUIDGen.generate(sprintf("powermeter-%s",config.address));
 		this.log = log;
+		this.refresh = config.refresh || 15;
 		
 		this.value = 0;
-		this.log.info(sprintf("LegrandMyHome::MHPowerMeter create object: %s", this.address));
+		this.totalenergy = 0;
+		this.log.info(sprintf("LegrandMyHome::MHPowerMeter create object"));
+		setInterval(function(){ 
+			this.mh.getPower(); 
+		}.bind(this), this.refresh * 1000);
 	}
+
+	identify(callback) {
+        this.log("Identify requested!");
+        callback(); // success
+    }
 
 	getServices() {
 		var service = new Service.AccessoryInformation();
@@ -663,10 +1213,38 @@ class MHPowerMeter {
 		this.powerMeterService = new LegrandMyHome.PowerMeterService(this.name);
 		this.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption)
 			.on('get', (callback) => {
-				this.log.info(sprintf("getConsumption %s = %s",this.address, this.state));
+				this.log.debug(sprintf("getConsumptio = %s",this.value));
 				callback(null, this.value);
 			});
-		return [service, this.powerMeterService];
+		this.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getConsumptio = %f",this.totalenergy));
+				callback(null, this.totalenergy);
+			});
+		this.powerMeterService.getCharacteristic(Characteristic.ResetFilterIndication)
+			.on('set', (value, callback) => {
+				this.totalenergy = 0;
+				callback(null);
+			});
+		this.powerLoggingService = new LegrandMyHome.PowerLogging(this.name);
+		/*this.powerLoggingService.getCharacteristic(LegrandMyHome.E863F116)
+			.on('get', (callback) => {
+				callback(null, null);
+			});
+		this.powerLoggingService.getCharacteristic(LegrandMyHome.E863F117)
+			.on('get', (callback) => {
+				callback(null, null);
+			});
+		this.powerLoggingService.getCharacteristic(LegrandMyHome.E863F11C)
+			.on('get', (callback) => {
+				callback(null, null);
+			});
+		this.powerLoggingService.getCharacteristic(LegrandMyHome.E863F121)
+			.on('get', (callback) => {
+				callback(null, null);
+			});*/
+
+		return [service, this.powerMeterService, this.powerLoggingService];
 	}	
 }
 
@@ -694,13 +1272,284 @@ class MHButton {
 		this.statelessSwitch = new Service.Switch(this.name);
 		this.statelessSwitch.getCharacteristic(Characteristic.On)
 			.on('set', (value,callback) => {
-				this.log.info(sprintf("setOn %s = %s",this.address, value));
+				this.log.debug(sprintf("setOn %s = %s",this.address, value));
 				callback(null);
 			})
 			.on('get', (callback) => {
-				this.log.info(sprintf("getOn %s",this.address));
+				this.log.debug(sprintf("getOn %s",this.address));
 				callback(null,0);
 			});
 		return [service, this.statelessSwitch];
 	}	
+	
+}
+
+
+class MHDryContact {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("drycontact-%s",config.address));
+		this.log = log;
+		this.type = config.type;
+		
+		this.state = config.state || false;
+		this.log.info(sprintf("LegrandMyHome::MHDryContact create object: %s", this.address));
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Dry-contact Sensor")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		switch (this.type) {
+			case 'Contact':
+				this.dryContactService = new Service.ContactSensor(this.name);
+				this.dryContactService.getCharacteristic(Characteristic.ContactSensorState)
+					.on('get', (callback) => {
+					this.log.debug(sprintf("getContactSensorState %s = %s",this.address, this.state));
+					callback(null, this.state);
+					});
+				break;
+			case 'Leak':
+				this.dryContactService = new Service.LeakSensor(this.name);
+				this.dryContactService.getCharacteristic(Characteristic.LeakDetected)
+					.on('get', (callback) => {
+					this.log.debug(sprintf("getLeakSensorState %s = %s",this.address, this.state));
+					callback(null, this.state);
+				});
+				break;
+			case 'Motion':
+				this.dryContactService = new Service.MotionSensor(this.name);
+				this.dryContactService.getCharacteristic(Characteristic.MotionDetected)
+					.on('get', (callback) => {
+					this.log.debug(sprintf("getMotionSensorState %s = %s",this.address, this.state));
+					callback(null, this.state);
+				});
+				break;
+			default:
+				this.dryContactService = new Service.ContactSensor(this.name);
+				this.dryContactService.getCharacteristic(Characteristic.ContactSensorState)
+					.on('get', (callback) => {
+					this.log.debug(sprintf("getContactSensorState %s = %s",this.address, this.state));
+					callback(null, this.state);
+					});
+				break;
+		}
+
+		return [service, this.dryContactService];
+	}	
+}
+
+class MHAux {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("aux-%s",config.address));
+		this.log = log;
+		this.type = config.type;
+		
+		this.state = false;
+		this.log.info(sprintf("LegrandMyHome::MHAux create object: %s", this.address));
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "AUX")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		switch (this.type) {
+			case 'Contact':
+				this.AUXService = new Service.ContactSensor(this.name);
+				this.AUXService.getCharacteristic(Characteristic.ContactSensorState)
+					.on('get', (callback) => {
+					this.log.debug(sprintf("getContactSensorState %s = %s",this.address, this.state));
+					callback(null, this.state);
+					});
+				break;
+			case 'Leak':
+				this.AUXService = new Service.LeakSensor(this.name);
+				this.AUXService.getCharacteristic(Characteristic.LeakDetected)
+					.on('get', (callback) => {
+					this.log.debug(sprintf("getLeakSensorState %s = %s",this.address, this.state));
+					callback(null, this.state);
+				});
+				break;
+			case 'Motion':
+				this.AUXService = new Service.MotionSensor(this.name);
+				this.AUXService.getCharacteristic(Characteristic.MotionDetected)
+					.on('get', (callback) => {
+					this.log.debug(sprintf("getMotionSensorState %s = %s",this.address, this.state));
+					callback(null, this.state);
+				});
+				break;
+			case 'Gas':
+				this.AUXService = new Service.CarbonMonoxideSensor(this.name);
+				this.AUXService.getCharacteristic(Characteristic.CarbonMonoxideDetected)
+					.on('get', (callback) => {
+					this.log.debug(sprintf("getGasSensorState %s = %s",this.address, this.state));
+					callback(null, this.state);
+				});
+				break;
+			default:
+				this.AUXService = new Service.ContactSensor(this.name);
+				this.AUXService.getCharacteristic(Characteristic.ContactSensorState)
+					.on('get', (callback) => {
+					this.log.debug(sprintf("getContactSensorState %s = %s",this.address, this.state));
+					callback(null, this.state);
+					});
+				break;
+		}
+
+		return [service, this.AUXService];
+	}	
+}
+
+class MHAlarm {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("alarm-%s",config.address));
+		this.log = log;
+		
+		this.state = Characteristic.SecuritySystemCurrentState.DISARMED;
+		this.target = Characteristic.SecuritySystemCurrentState.DISARMED;
+		this.fault = Characteristic.StatusFault.NO_FAULT;
+		this.tampered = Characteristic.StatusTampered.NOT_TAMPERED;
+		this.lowbattery = Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL;
+		this.batterycharging = Characteristic.ChargingState.NOT_CHARGING;
+		this.batterylevel = 100;
+		this.zone = [true, true,true,true,false,false,false,false];
+		this.active = false;
+		this.triggered = false;
+	
+		this.log.info(sprintf("LegrandMyHome::MHAlarm create object"));
+	
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Alarm 3486")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		this.alarmService = new Service.SecuritySystem(this.name);
+		this.alarmService.getCharacteristic(Characteristic.SecuritySystemCurrentState)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("alarm current = %d",this.state));
+				callback(null, this.state);
+			});
+		this.alarmService.getCharacteristic(Characteristic.SecuritySystemTargetState)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("alarm get target = %d",this.target));
+				callback(null, this.target);
+			})
+			.on('set', (value,callback) => {
+				this.log.debug(sprintf("alarm set target= %d", this.target));
+				callback(null);
+			})
+		this.alarmService.getCharacteristic(Characteristic.StatusFault)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getConsumptio = %s",this.value));
+				callback(null, this.fault);
+			});
+		this.alarmService.getCharacteristic(Characteristic.StatusTampered)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getConsumptio = %s",this.value));
+				callback(null, this.tampered);
+			});
+		this.alarmBatteryService = new Service.BatteryService(this.name);
+		this.alarmBatteryService.getCharacteristic(Characteristic.StatusLowBattery)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("alarm current = %d",this.state));
+				callback(null, this.lowbattery);
+			});
+		this.alarmBatteryService.getCharacteristic(Characteristic.BatteryLevel)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("alarm current = %d",this.state));
+				callback(null, this.batterylevel);
+			});
+		this.alarmBatteryService.getCharacteristic(Characteristic.ChargingState)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("alarm current = %d",this.state));
+				callback(null, this.batterycharging);
+			});
+		
+		
+		return [service, this.alarmService, this.alarmBatteryService];
+	}	
+}
+
+class MHControlledLoad {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("controlledload-%s",config.address));
+		this.log = log;
+		
+		this.enabled = true;
+		this.forced = 0;
+		this.log.info(sprintf("LegrandMyHome::MHControlledLoad create priority: %s", this.address));
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Controlled load")
+			.setCharacteristic(Characteristic.SerialNumber, "Priority " + this.address);
+
+		this.controlledLoad = new LegrandMyHome.ControlledLoadService(this.name);
+
+		this.controlledLoad.getCharacteristic(Characteristic.Active)
+			.on('set', (value,callback) => {
+				this.log.debug(sprintf("setOn %s = %s",this.address, value));
+				
+				if (value == 1)
+				{
+					this.enabled = true;
+					this.forced = value;
+					this.mh.forcedLoadCommand(this.address,this.forced);
+					callback(null);
+				}
+				else
+				{
+					this.forced = 0;
+					this.controlledLoad.getCharacteristic(Characteristic.Active).getValue(null);
+					setTimeout(function() {
+						this.forced = 1;
+						this.controlledLoad.getCharacteristic(Characteristic.Active).getValue(null);
+					}.bind(this),500);
+					callback(null);
+				}
+				
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getOn %s",this.address));
+				callback(null,this.forced);
+			});
+		this.controlledLoad.getCharacteristic(Characteristic.OutletInUse)
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getOn %s",this.address));
+				callback(null,this.enabled);
+			});
+		return [service, this.controlledLoad];
+	}	
+	
 }
