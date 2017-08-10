@@ -281,7 +281,17 @@ class LegrandMyHome {
 			if (accessory.powerMeterService !== undefined) {
 				accessory.value  = _value;
 				accessory.totalenergy = accessory.totalenergy + _value * accessory.refresh / 3600 / 1000;
-				accessory.powerLoggingService.addEntry({time: moment().unix(), power:accessory.value});
+				accessory.intPower = accessory.intPower + _value;
+				if (accessory.acquiredSamples<accessory.averagedSampleForHistory-1)
+				{
+					accessory.acquiredSamples++;
+				}
+				else
+				{
+					accessory.powerLoggingService.addEntry({time: moment().unix(), power:(accessory.intPower)/(accessory.averagedSampleForHistory)});
+					accessory.acquiredSamples=0;
+					accessory.intPower=0;
+				}
 				accessory.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption).getValue(null);
 				accessory.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption).getValue(null);
 			}
@@ -1149,7 +1159,11 @@ class MHPowerMeter {
 		this.UUID = UUIDGen.generate(sprintf("powermeter-%s",config.address));
 		this.log = log;
 		this.refresh = config.refresh || 15;
-		
+
+		this.intPower = 0 
+		this.acquiredSamples = 0
+		this.averagedSampleForHistory = 600/this.refresh;
+			
 		this.value = 0;
 		this.totalenergy = 0;
 		this.log.info(sprintf("LegrandMyHome::MHPowerMeter create object"));

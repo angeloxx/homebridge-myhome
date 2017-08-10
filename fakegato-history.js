@@ -147,13 +147,13 @@ module.exports = function(pHomebridge) {
                                             + numToHex(swap16(this.history[this.currentEntry].pressure*10),4)));
                                     break;
                                 case "energy":
-                            	    console.log("Data: "+ "10 " + numToHex(swap16(this.currentEntry),4) + " 0000 "
+                            	    console.log("Data: "+ "14 " + numToHex(swap16(this.currentEntry),4) + " 0000 "
                                             + numToHex(swap32(this.history[this.currentEntry].time-this.refTime-978307200),8)
                                             + this.accessoryType117
                                             + "0000 0000" 
                                             + numToHex(swap16(this.history[this.currentEntry].power*10),4) 
                                             + "0000 0000");
-                                    callback(null,hexToBase64('10' + numToHex(swap16(this.currentEntry),4)+ ' 0000 ' 
+                                    callback(null,hexToBase64('14' + numToHex(swap16(this.currentEntry),4)+ ' 0000 ' 
                                             + numToHex(swap32(this.history[this.currentEntry].time-this.refTime-978307200),8) 
                                             + this.accessoryType117
                                             + "0000 0000" 
