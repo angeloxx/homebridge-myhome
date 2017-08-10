@@ -4,7 +4,6 @@ var sprintf = require("sprintf-js").sprintf, inherits = require("util").inherits
 var events = require('events'), util = require('util'), fs = require('fs');
 var Accessory, Characteristic, Service, UUIDGen;
 var moment = require('moment');
-var FakeGatoHistoryService = require('./fakegato-history');
 
 module.exports = function (homebridge) {
 	Service = homebridge.hap.Service;
@@ -54,42 +53,6 @@ module.exports = function (homebridge) {
 		};
 		LegrandMyHome.ResetTotal.UUID = 'E863F112-079E-48FF-8F27-9C2605A29F52';
 	inherits(LegrandMyHome.ResetTotal, Characteristic);
-
-	/*LegrandMyHome.E863F117 = function() {
-		Characteristic.call(this, 'ReadTrunk2', 'E863F117-079E-48FF-8F27-9C2605A29F52');
-		this.setProps({
-			format: Characteristic.Formats.DATA,
-			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE]
-		});
-		this.value = this.getDefaultValue();
-		};
-		LegrandMyHome.E863F117.UUID = 'E863F117-079E-48FF-8F27-9C2605A29F52';
-	inherits(LegrandMyHome.E863F117, Characteristic);
-
-
-	LegrandMyHome.E863F11C = function() {
-		Characteristic.call(this, 'WriteTrunk1', 'E863F11C-079E-48FF-8F27-9C2605A29F52');
-		this.setProps({
-			format: Characteristic.Formats.DATA,
-			perms: [Characteristic.Perms.WRITE]
-		});
-		this.value = null;
-		};
-		LegrandMyHome.E863F11C.UUID = 'E863F11C-079E-48FF-8F27-9C2605A29F52';
-	inherits(LegrandMyHome.E863F11C, Characteristic);
-
-	LegrandMyHome.E863F121 = function() {
-		Characteristic.call(this, 'WriteTrunk2', 'E863F121-079E-48FF-8F27-9C2605A29F52');
-		this.setProps({
-			format: Characteristic.Formats.DATA,
-			perms: [Characteristic.Perms.WRITE]
-		});
-		this.value = null;
-		};
-		LegrandMyHome.E863F121.UUID = 'E863F121-079E-48FF-8F27-9C2605A29F52';
-	inherits(LegrandMyHome.E863F121, Characteristic);*/
-
-
 
 	LegrandMyHome.PowerMeterService = function(displayName, subtype) {
 			Service.call(this, displayName, '00000001-0000-1777-8000-775D67EC4377', subtype);
@@ -1178,9 +1141,6 @@ class MHThermometer {
 }
 
 class MHPowerMeter {
-	
-	
-
 	constructor(log, config) {
 		this.config = config || {};
 		this.mh = config.parent.controller;
@@ -1229,24 +1189,7 @@ class MHPowerMeter {
 			});
 		
 		this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy");
-		//this.powerLoggingService = new LegrandMyHome.PowerLogging(this.name);
-		/*this.powerLoggingService.getCharacteristic(LegrandMyHome.E863F116)
-			.on('get', (callback) => {
-				callback(null, null);
-			});
-		this.powerLoggingService.getCharacteristic(LegrandMyHome.E863F117)
-			.on('get', (callback) => {
-				callback(null, null);
-			});
-		this.powerLoggingService.getCharacteristic(LegrandMyHome.E863F11C)
-			.on('get', (callback) => {
-				callback(null, null);
-			});
-		this.powerLoggingService.getCharacteristic(LegrandMyHome.E863F121)
-			.on('get', (callback) => {
-				callback(null, null);
-			});*/
-
+		
 		return [service, this.powerMeterService, this.powerLoggingService];
 	}	
 }
