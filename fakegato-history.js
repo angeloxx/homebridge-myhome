@@ -164,7 +164,10 @@ module.exports = function(pHomebridge) {
                         this.currentEntry++;
                     }
                     else
+                    {
                         this.transfer=false;
+                        callback(null,hexToBase64('00'));
+                    }
                     
             });	
             
@@ -184,6 +187,7 @@ module.exports = function(pHomebridge) {
                 this.currentEntry = address;
             else
                 this.currentEntry = 1;
+            this.transfer=true;
         }
         
         //in order to be consistent with Eve, entry address start from 1
@@ -232,7 +236,7 @@ module.exports = function(pHomebridge) {
             console.log("Address requested " + this.accessoryType + ": "+ hexAddress);
             if (this.transfer==false)
             {
-                this.transfer=true;
+                //this.transfer=true;
                 this.sendHistory(address);
             }
         }
