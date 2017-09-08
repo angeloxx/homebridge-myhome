@@ -10,7 +10,7 @@ module.exports = function (homebridge) {
 	Characteristic = homebridge.hap.Characteristic;
 	Accessory = homebridge.platformAccessory;
 	UUIDGen = homebridge.hap.uuid;
-	var FakeGatoHistoryService = require('./fakegato-history')(homebridge);
+	var FakeGatoHistoryService = require('../fakegato-history/fakegato-history')(homebridge);
 
 	/* Try to map Elgato's outlet custom vars */
 	LegrandMyHome.CurrentPowerConsumption = function() {
@@ -1202,7 +1202,7 @@ class MHPowerMeter {
 				callback(null);
 			});
 		
-		this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy");
+		this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this);
 		
 		return [service, this.powerMeterService, this.powerLoggingService];
 	}	
