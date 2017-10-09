@@ -4,6 +4,7 @@ var sprintf = require("sprintf-js").sprintf, inherits = require("util").inherits
 var events = require('events'), util = require('util'), fs = require('fs');
 var Accessory, Characteristic, Service, UUIDGen;
 var moment = require('moment');
+var correctingInterval = require('correcting-interval');
 
 module.exports = function (homebridge) {
 	Service = homebridge.hap.Service;
@@ -1167,7 +1168,7 @@ class MHPowerMeter {
 		this.value = 0;
 		this.totalenergy = 0;
 		this.log.info(sprintf("LegrandMyHome::MHPowerMeter create object"));
-		setInterval(function(){ 
+		correctingInterval.setCorrectingInterval(function(){ 
 			this.mh.getPower(); 
 		}.bind(this), this.refresh * 1000);
 	}
