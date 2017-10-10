@@ -30,6 +30,6 @@
     "inherits": "^2.0.0",
     "moment": "^2.18.1",
     "correcting-interval":"^2.0.0",
-    "fakegato-history":"simont77/fakegato-history#semver:^v0.3.0"
+    "fakegato-history":"simont77/fakegato-history#v0.3.0"
   }
 }
