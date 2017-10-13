@@ -281,7 +281,7 @@ class LegrandMyHome {
 		this.devices.forEach(function(accessory) {
 			if (accessory.powerMeterService !== undefined) {
 				accessory.value  = _value;
-				accessory.totalenergy = accessory.totalenergy + _value * accessory.refresh / 3600 / 1000;
+				/*accessory.totalenergy = accessory.totalenergy + _value * accessory.refresh / 3600 / 1000;
 				accessory.intPower = accessory.intPower + _value;
 				if (accessory.acquiredSamples<accessory.averagedSampleForHistory-1)
 				{
@@ -294,7 +294,7 @@ class LegrandMyHome {
 					accessory.intPower=0;
 				}
 				accessory.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption).getValue(null);
-				accessory.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption).getValue(null);
+				accessory.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption).getValue(null);*/
 			}
 		}.bind(this));
 	}
@@ -1168,8 +1168,23 @@ class MHPowerMeter {
 		this.value = 0;
 		this.totalenergy = 0;
 		this.log.info(sprintf("LegrandMyHome::MHPowerMeter create object"));
-		correctingInterval.setCorrectingInterval(function(){ 
-			this.mh.getPower(); 
+		correctingInterval.setCorrectingInterval(function(){
+			this.totalenergy = this.totalenergy + this.value * this.refresh / 3600 / 1000;
+			this.intPower = this.intPower + this.value;
+			if (this.acquiredSamples<this.averagedSampleForHistory-1)
+			{
+				this.acquiredSamples++;
+			}
+			else
+			{
+				this.powerLoggingService.addEntry({time: moment().unix(), power:(this.intPower)/(this.averagedSampleForHistory)});
+				this.acquiredSamples=0;
+				this.intPower=0;
+			}
+			this.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption).getValue(null);
+				this.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption).getValue(null);
+			
+			this.mh.getPower();
 		}.bind(this), this.refresh * 1000);
 	}
 
