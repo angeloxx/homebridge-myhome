@@ -1,4 +1,4 @@
-var path = require("path");	
+var path = require("path");
 var mh = require(path.join(__dirname,'/lib/mhclient'));
 var sprintf = require("sprintf-js").sprintf, inherits = require("util").inherits, Promise = require('promise');
 var events = require('events'), util = require('util'), fs = require('fs');
@@ -52,12 +52,14 @@ class LegrandMyHome {
 		this.config.devices.forEach(function (accessory) {
 			this.log.info("LegrandMyHome: adds accessory");
 			accessory.parent = this;
+			if (accessory.accessory == 'MHScene') this.devices.push(new MHScene(this.log,accessory))
 			if (accessory.accessory == 'MHRelay') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHBlind') this.devices.push(new MHBlind(this.log,accessory))
 			if (accessory.accessory == 'MHBlindAdvanced') this.devices.push(new MHBlindAdvanced(this.log,accessory))
 			if (accessory.accessory == 'MHOutlet') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHRelayLight') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHDimmer') this.devices.push(new MHDimmer(this.log,accessory))
+			if (accessory.accessory == 'MHDimmer10') this.devices.push(new MHDimmer10(this.log,accessory))
 			if (accessory.accessory == 'MHThermostat') this.devices.push(new MHThermostat(this.log,accessory))
 			if (accessory.accessory == 'MHExternalThermometer') this.devices.push(new MHThermometer(this.log,accessory))
 			if (accessory.accessory == 'MHContactSensor') this.devices.push(new MHContactSensor(this.log,accessory))
@@ -97,7 +99,7 @@ class LegrandMyHome {
 				accessory.contactSensorService.getCharacteristic(Characteristic.ContactSensorState).getValue(null);
 			}
 		}.bind(this));
-	}	
+	}
 
 	onDimmer(_address,_level) {
 		this.devices.forEach(function(accessory) {
@@ -105,6 +107,9 @@ class LegrandMyHome {
 				accessory.power = (_level > 0) ? 1 : 0;
 				accessory.bri = _level;
 				accessory.lightBulbService.getCharacteristic(Characteristic.On).getValue(null);
+				
+				// added Brightness update 
+				accessory.lightBulbService.getCharacteristic(Characteristic.Brightness).getValue(null);
 			}
 		}.bind(this));
 	}
@@ -134,7 +139,7 @@ class LegrandMyHome {
 	}
 
 	onAdvancedBlind(_address,_action,_position) {
-		this.devices.forEach(function(accessory) { 
+		this.devices.forEach(function(accessory) {
 			if (accessory.address == _address && accessory.windowCoveringPlusService !== undefined) {
 				if (_action == "STOP") {
 					accessory.currentPosition = accessory.targetPosition = _position;
@@ -192,7 +197,7 @@ class LegrandMyHome {
 					accessory.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).getValue(null);
 				}
 			}
-		}.bind(this));		
+		}.bind(this));
 	}
 
 	onThermometer(_address,_measure,_level) {
@@ -203,13 +208,13 @@ class LegrandMyHome {
 					accessory.thermometerService.getCharacteristic(Characteristic.CurrentTemperature).getValue(null);
 				}
 			}
-		}.bind(this));		
-	}	
+		}.bind(this));
+	}
 
 	accessories(callback) {
 		this.log.debug("LegrandMyHome (accessories readed)");
 		callback(this.devices);
-	}	
+	}
 }
 
 class MHRelay {
@@ -273,6 +278,172 @@ class MHRelay {
 	}
 }
 
+// new object for scenario activation
+class MHScene {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.scene = config.scene;
+		this.groups = config.groups || []; 		/* TODO */
+		this.pul = false; 						/* TODO */
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("scene-%s",config.address));
+		this.log = log;
+		this.power = false;
+		this.bri = 100;
+		this.sat = 0;
+		this.hue = 0;
+		this.log.info(sprintf("LegrandMyHome::MHScene create object: %s - %s", this.address, this.scene));
+		this.mh.addLightBusDevice(this.address);
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			   .setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			   .setCharacteristic(Characteristic.Model, "Scene")
+			   .setCharacteristic(Characteristic.SerialNumber, "Address " + this.address + this.scene);
+
+		this.SceneService = new Service.Switch(this.name);
+
+		this.SceneService
+		    .getCharacteristic(Characteristic.On)
+            .on('set', (level, callback) => {
+				this.log.debug(sprintf("Scene activated: %s = %s",this.address, this.scene));
+				this.power = false;
+				this.mh.sceneCommand(this.address,this.scene)
+				callback(null);
+			})
+			.on('get', (callback) => {
+				callback(null, this.power);
+			});
+			
+		return [service, this.SceneService];
+	}
+}
+
+
+class MHDimmer {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.groups = config.groups || []; 		/* TODO */
+		this.pul = false; 						/* TODO */
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("dimmer-%s",config.address));
+		this.log = log;
+
+		this.power = false;
+		this.bri = 100;
+		this.sat = 0;
+		this.hue = 0;
+		this.log.info(sprintf("LegrandMyHome::MHDimmer create object: %s", this.address));
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Dimmer")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		this.lightBulbService = new Service.Lightbulb(this.name);
+
+		this.lightBulbService.getCharacteristic(Characteristic.On)
+			.on('set', (level, callback) => {
+				this.log.debug(sprintf("setPower %s = %s",this.address, level));
+				this.power = (level > 0);
+				if (this.power && this.bri == 0) {
+					this.bri = 100;
+				}
+				this.mh.relayCommand(this.address,this.power)
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
+				callback(null, this.power);
+			});
+
+		this.lightBulbService.getCharacteristic(Characteristic.Brightness)
+			.on('set', (level, callback) => {
+				this.log.debug(sprintf("setBrightness %s = %d",this.address, level));
+				this.bri = parseInt(level);
+				this.power = (this.bri > 0);
+				this.mh.dimmerCommand(this.address,this.bri)
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getBrightness %s = %d",this.address, this.bri));
+				callback(null, this.bri);
+			});
+		return [service, this.lightBulbService];
+	}
+}
+
+// object for 10-level dimmer
+class MHDimmer10 {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.groups = config.groups || []; 		/* TODO */
+		this.pul = false; 						/* TODO */
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("dimmer-%s",config.address));
+		this.log = log;
+
+		this.power = false;
+		this.bri = 100;
+		this.sat = 0;
+		this.hue = 0;
+		this.log.info(sprintf("LegrandMyHome::MHDimmer10 create object: %s", this.address));
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Dimmer10")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		this.lightBulbService = new Service.Lightbulb(this.name);
+
+		this.lightBulbService.getCharacteristic(Characteristic.On)
+			.on('set', (level, callback) => {
+			this.log.debug(sprintf("setPower %s = %s",this.address, level));
+		this.power = (level > 0);
+		if (this.power && this.bri == 0) {
+			this.bri = 100;
+		}
+		this.mh.relayCommand(this.address,this.power)
+		callback(null);
+	})
+.on('get', (callback) => {
+		this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
+	callback(null, this.power);
+});
+
+this.lightBulbService.getCharacteristic(Characteristic.Brightness)
+	.on('set', (level, callback) => {
+	this.log.debug(sprintf("setBrightness %s = %d",this.address, level));
+this.bri = parseInt(level);
+this.power = (this.bri > 0);
+this.mh.dimmer10Command(this.address,this.bri)
+callback(null);
+})
+.on('get', (callback) => {
+	this.log.debug(sprintf("getBrightness %s = %d",this.address, this.bri));
+callback(null, this.bri);
+});
+return [service, this.lightBulbService];
+}
+}
+
 class MHBlind {
 	constructor(log, config) {
 		this.config = config || {};
@@ -285,7 +456,7 @@ class MHBlind {
 		this.time = config.time || 0;
 		this.UUID = UUIDGen.generate(sprintf("blind-%s",config.address));
 		this.log = log;
-		
+
 		this.runningStartTime = -1;
 		this.runningDirection = Characteristic.PositionState.STOPPED;
 		this.state = Characteristic.PositionState.STOPPED;
@@ -344,7 +515,7 @@ class MHBlind {
 			.on('get', (callback) => {
 				this.log.debug(sprintf("getCurrentPosition %s = %s",this.address, this.state));
 				callback(null, this.currentPosition);
-			});			
+			});
 
 		this.windowCoveringService.getCharacteristic(Characteristic.TargetPosition)
 			.on('set', (value, callback) => {
@@ -387,7 +558,7 @@ class MHBlindAdvanced {
 		//this.time = config.time || 0;
 		this.UUID = UUIDGen.generate(sprintf("blindplus-%s",config.address));
 		this.log = log;
-		
+
 		this.state = Characteristic.PositionState.STOPPED;
 		this.currentPosition = 0;
 		this.targetPosition = 0;
@@ -438,65 +609,6 @@ class MHBlindAdvanced {
 	}
 }
 
-class MHDimmer {
-	constructor(log, config) {
-		this.config = config || {};
-		this.mh = config.parent.controller;
-		this.name = config.name;
-		this.address = config.address;
-		this.groups = config.groups || []; 		/* TODO */
-		this.pul = false; 						/* TODO */
-		this.displayName = config.name;
-		this.UUID = UUIDGen.generate(sprintf("dimmer-%s",config.address));
-		this.log = log;
-		
-		this.power = false;
-		this.bri = 100;
-		this.sat = 0;
-		this.hue = 0;
-		this.log.info(sprintf("LegrandMyHome::MHRelay create object: %s", this.address));
-	}
-
-	getServices() {
-		var service = new Service.AccessoryInformation();
-		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
-			.setCharacteristic(Characteristic.Model, "Dimmer")
-			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
-
-		this.lightBulbService = new Service.Lightbulb(this.name);
-
-		this.lightBulbService.getCharacteristic(Characteristic.On)
-			.on('set', (level, callback) => {
-				this.log.debug(sprintf("setPower %s = %s",this.address, level));
-				this.power = (level > 0);
-				if (this.power && this.bri == 0) {
-					this.bri = 100;
-				}
-				this.mh.relayCommand(this.address,this.power)
-				callback(null);
-			})
-			.on('get', (callback) => {
-				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
-				callback(null, this.power);
-			});
-
-		this.lightBulbService.getCharacteristic(Characteristic.Brightness)
-			.on('set', (level, callback) => {
-				this.log.debug(sprintf("setBrightness %s = %d",this.address, level));
-				this.bri = parseInt(level);
-				this.power = (this.bri > 0);
-				this.mh.dimmerCommand(this.address,this.bri)
-				callback(null);
-			})
-			.on('get', (callback) => {
-				this.log(sprintf("getBrightness %s = %d",this.address, this.bri));
-				callback(null, this.bri);
-			});			
-		return [service, this.lightBulbService];
-	}
-}
-
 
 class MHThermostat {
 	constructor(log, config) {
@@ -507,7 +619,7 @@ class MHThermostat {
 		this.displayName = config.name;
 		this.UUID = UUIDGen.generate(sprintf("thermostat-%s",config.address));
 		this.log = log;
-		
+
 		this.ambient = 0;
 		this.setpoint = 20;
 		this.mode = -1;
@@ -535,7 +647,7 @@ class MHThermostat {
 				callback(null, this.state);
 			}).on('set', (value,callback) => {
 				callback(null);
-			});	
+			});
 
 		this.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState)
 			.on('get', (callback) => {
@@ -551,7 +663,7 @@ class MHThermostat {
 				this.state = value;
 				this.log.debug(sprintf("setTargetHeatingCoolingState %s = %s",this.address, this.state));
 				callback(null);
-			});			
+			});
 
 		this.thermostatService.getCharacteristic(Characteristic.TargetTemperature).setProps({minValue: 15, minStep:0.5, maxValue: 40})
 			.on('set', (value, callback) => {
@@ -572,7 +684,7 @@ class MHThermostat {
 			});
 
 		return [service, this.thermostatService];
-	}	
+	}
 }
 
 class MHThermometer {
@@ -584,7 +696,7 @@ class MHThermometer {
 		this.displayName = config.name;
 		this.UUID = UUIDGen.generate(sprintf("thermometer-%s",config.address));
 		this.log = log;
-		
+
 		this.ambient = -1;
 		this.log.info(sprintf("LegrandMyHome::MHThermometer create object: %s", this.address));
 	}
@@ -604,7 +716,7 @@ class MHThermometer {
 			});
 
 		return [service, this.thermometerService];
-	}	
+	}
 }
 
 class MHContactSensor {
@@ -616,7 +728,7 @@ class MHContactSensor {
 		this.displayName = config.name;
 		this.UUID = UUIDGen.generate(sprintf("contactsensor-%s",config.address));
 		this.log = log;
-		
+
 		this.state = false;
 		this.log.info(sprintf("LegrandMyHome::MHContactSensor create object: %s", this.address));
 	}
@@ -636,7 +748,7 @@ class MHContactSensor {
 			});
 
 		return [service, this.contactSensorService];
-	}	
+	}
 }
 
 class MHPowerMeter {
@@ -648,7 +760,7 @@ class MHPowerMeter {
 		this.displayName = config.name;
 		this.UUID = UUIDGen.generate(sprintf("powermeter-%s",config.address));
 		this.log = log;
-		
+
 		this.value = 0;
 		this.log.info(sprintf("LegrandMyHome::MHPowerMeter create object: %s", this.address));
 	}
@@ -667,7 +779,7 @@ class MHPowerMeter {
 				callback(null, this.value);
 			});
 		return [service, this.powerMeterService];
-	}	
+	}
 }
 
 class MHButton {
@@ -679,7 +791,7 @@ class MHButton {
 		this.displayName = config.name;
 		this.UUID = UUIDGen.generate(sprintf("button-%s",config.address));
 		this.log = log;
-		
+
 		this.value = 0;
 		this.log.info(sprintf("LegrandMyHome::MHButton (CEN/CEN+) create object: %s", this.address));
 	}
@@ -702,5 +814,5 @@ class MHButton {
 				callback(null,0);
 			});
 		return [service, this.statelessSwitch];
-	}	
+	}
 }
