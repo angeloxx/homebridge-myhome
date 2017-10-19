@@ -51,6 +51,11 @@
             "name": "Sample Meter",
             "address": "0/6/3",
             "time": 10
+            },{
+            "accessory": "MHScene",
+            "name": "F420-LivingRoom-Scene-4",
+            "address": "11",
+            "scene": "4"
             }]
         }],
     "bridge": {

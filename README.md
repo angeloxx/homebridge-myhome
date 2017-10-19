@@ -173,6 +173,7 @@ The devices section contains the list of devices that will be managed. All devic
     to use a Group, CEN, CEN+ or other command to turn on and off that load, using the _address_ load for the status monitor. Remember that HomeKit will think that the load has changed the status after the command even if is not true.
 
 
+* MHScene: Scene (F420) or IRBlaster, address is N, Scene is scenario number (thanks to dendeps) - NOT TESTED
 * MHDimmer: Lighting Dimmer (eg. F427, F413N), address is B/A/PL (eg. 0/1/10)
 * MHThermostat: Standard Thermostat controlled by a 99-Zones Central Station (code 3550), address is the Zone Identifier (1-99)
 * MHExternalThermometer: External Probe controlled by a 99-Zones Central Station (code 3550), address is the Zone Identifier (1-9)

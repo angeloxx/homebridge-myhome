@@ -52,6 +52,7 @@ class LegrandMyHome {
 		this.config.devices.forEach(function (accessory) {
 			this.log.info("LegrandMyHome: adds accessory");
 			accessory.parent = this;
+			if (accessory.accessory == 'MHScene') this.devices.push(new MHScene(this.log,accessory))
 			if (accessory.accessory == 'MHRelay') this.devices.push(new MHRelay(this.log,accessory))
 			if (accessory.accessory == 'MHBlind') this.devices.push(new MHBlind(this.log,accessory))
 			if (accessory.accessory == 'MHBlindAdvanced') this.devices.push(new MHBlindAdvanced(this.log,accessory))
@@ -436,6 +437,55 @@ class MHBlindAdvanced {
 
 		return [service, this.windowCoveringPlusService];
 	}
+}
+
+
+// new object for scenario (or IR blaster) activation (credits to dendeps)
+class MHScene {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.scene = config.scene;
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("scene-%s",config.address));
+		this.log = log;
+		
+		this.value = 0;
+		this.log.info(sprintf("LegrandMyHome::MHScene create object: %s", this.address));
+	}
+
+	getServices() {
+		var services = [];
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Model, "Scene")
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address + " scene " + this.scene);
+
+			
+		this.statelessSwitch = new Service.Switch(this.name);
+		this.statelessSwitch.getCharacteristic(Characteristic.On)
+			.on('set', (value,callback) => {
+				if (value == true) {
+					this.log.info(sprintf("sceneOn %s = scenario %s",this.address, this.scene));
+					this.mh.sceneCommand(this.address,this.scene)
+
+					/* Back to Off */
+					var Timer = setTimeout(function() {
+						this.statelessSwitch.getCharacteristic(Characteristic.On).setValue(false, undefined)
+					}.bind(this), 500);
+				}
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.info(sprintf("getStatus %s",this.address));
+				callback(null,false);
+			});
+		return [service, this.statelessSwitch];				
+
+	}	
 }
 
 class MHDimmer {
