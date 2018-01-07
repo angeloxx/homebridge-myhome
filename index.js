@@ -13,7 +13,7 @@ module.exports = function (homebridge) {
 	UUIDGen = homebridge.hap.uuid;
 	var FakeGatoHistoryService = require('fakegato-history')(homebridge);
 
-	/* Try to map Elgato's outlet custom vars */
+	/* Try to map Elgato custom vars */
 	LegrandMyHome.CurrentPowerConsumption = function() {
 		Characteristic.call(this, 'Consumption', 'E863F10D-079E-48FF-8F27-9C2605A29F52');
 		this.setProps({
@@ -54,6 +54,78 @@ module.exports = function (homebridge) {
 		};
 		LegrandMyHome.ResetTotal.UUID = 'E863F112-079E-48FF-8F27-9C2605A29F52';
 	inherits(LegrandMyHome.ResetTotal, Characteristic);
+
+	LegrandMyHome.Sensitivity = function() {
+		Characteristic.call(this, 'Sensitivity', 'E863F120-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.UINT16,
+			maxValue: 7,
+			minValue: 0,
+			minStep: 1,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE]
+		});
+		this.value = this.getDefaultValue();
+		};
+		LegrandMyHome.Sensitivity.UUID = 'E863F120-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.Sensitivity, Characteristic);
+
+	LegrandMyHome.Duration = function() {
+		Characteristic.call(this, 'Duration', 'E863F12D-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.UINT16,
+			maxValue: 3600,
+			minValue: 0,
+			minStep: 1,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE]
+		});
+		this.value = this.getDefaultValue();
+		};
+		LegrandMyHome.Duration.UUID = 'E863F12D-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.Duration, Characteristic);
+
+	LegrandMyHome.LastActivation = function() {
+		Characteristic.call(this, 'LastActivation', 'E863F11A-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.UINT32,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
+		});
+		this.value = this.getDefaultValue();
+		};
+		LegrandMyHome.LastActivation.UUID = 'E863F11A-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.LastActivation, Characteristic);
+
+	LegrandMyHome.TimesOpened = function() {
+		Characteristic.call(this, 'TimesOpened', 'E863F129-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.UINT32,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
+		});
+		this.value = this.getDefaultValue();
+		};
+		LegrandMyHome.TimesOpened.UUID = 'E863F129-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.TimesOpened, Characteristic);
+
+	LegrandMyHome.Char118 = function() {
+		Characteristic.call(this, 'Char118', 'E863F118-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.UINT32,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
+		});
+		this.value = this.getDefaultValue();
+		};
+		LegrandMyHome.Char118.UUID = 'E863F118-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.Char118, Characteristic);
+
+	LegrandMyHome.Char119 = function() {
+		Characteristic.call(this, 'Char119', 'E863F119-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.UINT32,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
+		});
+		this.value = this.getDefaultValue();
+		};
+		LegrandMyHome.Char119.UUID = 'E863F119-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.Char119, Characteristic);
 
 	LegrandMyHome.PowerMeterService = function(displayName, subtype) {
 			Service.call(this, displayName, '00000001-0000-1777-8000-775D67EC4377', subtype);
@@ -1271,10 +1343,16 @@ class MHDryContact {
 		this.UUID = UUIDGen.generate(sprintf("drycontact-%s",config.address));
 		this.log = log;
 		this.type = config.type;
-		
+		this.numberOpened = 0;
+
 		this.state = config.state || false;
 		this.log.info(sprintf("LegrandMyHome::MHDryContact create object: %s", this.address));
 	}
+
+	identify(callback) {
+        this.log("Identify requested!");
+        callback(); // success
+    }
 
 	getServices() {
 		var service = new Service.AccessoryInformation();
@@ -1286,11 +1364,35 @@ class MHDryContact {
 		switch (this.type) {
 			case 'Contact':
 				this.dryContactService = new Service.ContactSensor(this.name);
+				this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("door", this);
+				this.dryContactService.addCharacteristic(LegrandMyHome.LastActivation);
+				this.dryContactService.addCharacteristic(LegrandMyHome.TimesOpened);
+				this.dryContactService.addCharacteristic(LegrandMyHome.ResetTotal);
+				this.dryContactService.addCharacteristic(LegrandMyHome.Char118);
+				this.dryContactService.addCharacteristic(LegrandMyHome.Char119);
 				this.dryContactService.getCharacteristic(Characteristic.ContactSensorState)
 					.on('get', (callback) => {
 					this.log.debug(sprintf("getContactSensorState %s = %s",this.address, this.state));
 					callback(null, this.state);
 					});
+				this.dryContactService.getCharacteristic(Characteristic.ContactSensorState)
+					.on('change', () => {
+					this.log.debug(sprintf("changeContactSensorState %s = %s",this.address, this.state));
+					this.LoggingService.addEntry({time: moment().unix(), status: this.state});
+					if (this.state)
+						this.numberOpened++;
+					});
+				this.dryContactService.getCharacteristic(LegrandMyHome.ResetTotal)
+					.on('set', (value, callback) => {
+						this.numberOpened = 0;
+						callback(null);
+					});
+				this.dryContactService.getCharacteristic(LegrandMyHome.TimesOpened)
+					.on('get', (callback) => {
+						this.log.debug(sprintf("getNumberOpened = %f",this.numberOpened));
+						callback(null, this.numberOpened);
+					});
+				return [service, this.dryContactService, this.LoggingService];
 				break;
 			case 'Leak':
 				this.dryContactService = new Service.LeakSensor(this.name);
@@ -1299,14 +1401,25 @@ class MHDryContact {
 					this.log.debug(sprintf("getLeakSensorState %s = %s",this.address, this.state));
 					callback(null, this.state);
 				});
+				return [service, this.dryContactService];
 				break;
 			case 'Motion':
 				this.dryContactService = new Service.MotionSensor(this.name);
+				this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this);
+				this.dryContactService.addCharacteristic(LegrandMyHome.Sensitivity);
+				this.dryContactService.addCharacteristic(LegrandMyHome.Duration);
+				this.dryContactService.addCharacteristic(LegrandMyHome.LastActivation);				
 				this.dryContactService.getCharacteristic(Characteristic.MotionDetected)
 					.on('get', (callback) => {
 					this.log.debug(sprintf("getMotionSensorState %s = %s",this.address, this.state));
 					callback(null, this.state);
 				});
+				this.dryContactService.getCharacteristic(Characteristic.MotionDetected)
+					.on('change', () => {
+					this.log.debug(sprintf("changeMotionSensorState %s = %s",this.address, this.state));
+					this.LoggingService.addEntry({time: moment().unix(), status: this.state});
+					});
+				return [service, this.dryContactService, this.LoggingService];
 				break;
 			default:
 				this.dryContactService = new Service.ContactSensor(this.name);
@@ -1315,10 +1428,11 @@ class MHDryContact {
 					this.log.debug(sprintf("getContactSensorState %s = %s",this.address, this.state));
 					callback(null, this.state);
 					});
+				return [service, this.dryContactService];
 				break;
 		}
 
-		return [service, this.dryContactService];
+		
 	}	
 }
 
