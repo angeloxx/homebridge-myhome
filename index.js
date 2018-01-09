@@ -721,6 +721,7 @@ class MHRelay {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "Relay")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		switch (this.config.accessory) {
@@ -787,6 +788,7 @@ class MHTimedRelay {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "TimedRelay")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		
@@ -863,6 +865,7 @@ class MHRain {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "Relay")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 	
@@ -940,6 +943,7 @@ class MHBlind {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "Blind")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		this.windowCoveringService = new Service.WindowCovering(this.name);
@@ -1009,6 +1013,7 @@ class MHBlindAdvanced {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "Advanced Blind")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		this.windowCoveringPlusService = new Service.WindowCovering(this.name);
@@ -1077,6 +1082,7 @@ class MHDimmer {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "Dimmer")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		this.lightBulbService = new Service.Lightbulb(this.name);
@@ -1135,6 +1141,7 @@ class MHThermostat {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "Thermostat")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		this.thermostatService = new Service.Thermostat(this.name);
@@ -1209,6 +1216,7 @@ class MHThermometer {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "Thermometer")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		this.thermometerService = new Service.TemperatureSensor(this.name);
@@ -1270,6 +1278,7 @@ class MHPowerMeter {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "Power Meter")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		this.powerMeterService = new Elgato.PowerMeterService(this.name);
@@ -1314,6 +1323,7 @@ class MHButton {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "CEN/CEN+")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		this.statelessSwitch = new Service.Switch(this.name);
@@ -1360,6 +1370,7 @@ class MHDryContact {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "Dry-contact Sensor")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		switch (this.type) {
@@ -1467,6 +1478,7 @@ class MHAux {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "AUX")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		switch (this.type) {
@@ -1545,6 +1557,7 @@ class MHAlarm {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "Alarm 3486")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		this.alarmService = new Service.SecuritySystem(this.name);
@@ -1614,6 +1627,7 @@ class MHControlledLoad {
 		service.setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
 			.setCharacteristic(Characteristic.Model, "Controlled load")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Priority " + this.address);
 
 		this.controlledLoad = new Elgato.ControlledLoadService(this.name);
