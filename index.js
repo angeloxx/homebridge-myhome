@@ -719,7 +719,7 @@ class MHRelay {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "Relay")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
@@ -786,7 +786,7 @@ class MHTimedRelay {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "TimedRelay")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
@@ -863,7 +863,7 @@ class MHRain {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "Relay")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
@@ -941,7 +941,7 @@ class MHBlind {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "Blind")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
@@ -1011,7 +1011,7 @@ class MHBlindAdvanced {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "Advanced Blind")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
@@ -1080,7 +1080,7 @@ class MHDimmer {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "Dimmer")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
@@ -1139,7 +1139,7 @@ class MHThermostat {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "Thermostat")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
@@ -1214,7 +1214,7 @@ class MHThermometer {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "Thermometer")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
@@ -1276,10 +1276,10 @@ class MHPowerMeter {
 		var service = new Service.AccessoryInformation();
 		
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "Power Meter")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
-			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+			.setCharacteristic(Characteristic.SerialNumber, "Name-" + this.name);
 
 		this.powerMeterService = new Elgato.PowerMeterService(this.name);
 		this.powerMeterService.getCharacteristic(Elgato.CurrentPowerConsumption)
@@ -1321,7 +1321,7 @@ class MHButton {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "CEN/CEN+")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
@@ -1368,7 +1368,7 @@ class MHDryContact {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "Dry-contact Sensor")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
@@ -1476,7 +1476,7 @@ class MHAux {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "AUX")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
@@ -1555,10 +1555,10 @@ class MHAlarm {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "Alarm 3486")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
-			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+			.setCharacteristic(Characteristic.SerialNumber, "Name- " + this.name);
 
 		this.alarmService = new Service.SecuritySystem(this.name);
 		this.alarmService.getCharacteristic(Characteristic.SecuritySystemCurrentState)
@@ -1625,7 +1625,7 @@ class MHControlledLoad {
 	getServices() {
 		var service = new Service.AccessoryInformation();
 		service.setCharacteristic(Characteristic.Name, this.name)
-			.setCharacteristic(Characteristic.Manufacturer, "Legrand MyHome")
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "Controlled load")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Priority " + this.address);
