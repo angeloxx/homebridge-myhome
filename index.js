@@ -15,7 +15,7 @@ module.exports = function (homebridge) {
 	var FakeGatoHistoryService = require('fakegato-history')(homebridge);
 
 	/* Try to map Elgato custom vars */
-	Elgato.CurrentPowerConsumption = function() {
+	LegrandMyHome.CurrentPowerConsumption = function() {
 		Characteristic.call(this, 'Consumption', 'E863F10D-079E-48FF-8F27-9C2605A29F52');
 		this.setProps({
 			format: Characteristic.Formats.UINT16,
@@ -27,10 +27,10 @@ module.exports = function (homebridge) {
 		});
 		this.value = this.getDefaultValue();
 		};
-		Elgato.CurrentPowerConsumption.UUID = 'E863F10D-079E-48FF-8F27-9C2605A29F52';
-	inherits(Elgato.CurrentPowerConsumption, Characteristic);
+		LegrandMyHome.CurrentPowerConsumption.UUID = 'E863F10D-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.CurrentPowerConsumption, Characteristic);
 
-	Elgato.TotalConsumption = function() {
+	LegrandMyHome.TotalConsumption = function() {
 		Characteristic.call(this, 'Energy', 'E863F10C-079E-48FF-8F27-9C2605A29F52');
 		this.setProps({
 			format: Characteristic.Formats.FLOAT,
@@ -42,10 +42,10 @@ module.exports = function (homebridge) {
 		});
 		this.value = this.getDefaultValue();
 		};
-		Elgato.TotalConsumption.UUID = 'E863F10C-079E-48FF-8F27-9C2605A29F52';
-	inherits(Elgato.TotalConsumption, Characteristic);
+		LegrandMyHome.TotalConsumption.UUID = 'E863F10C-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.TotalConsumption, Characteristic);
 
-	Elgato.ResetTotal = function() {
+	LegrandMyHome.ResetTotal = function() {
 		Characteristic.call(this, 'Reset', 'E863F112-079E-48FF-8F27-9C2605A29F52');
 		this.setProps({
 			format: Characteristic.Formats.UINT32,
@@ -53,10 +53,10 @@ module.exports = function (homebridge) {
 		});
 		this.value = this.getDefaultValue();
 		};
-		Elgato.ResetTotal.UUID = 'E863F112-079E-48FF-8F27-9C2605A29F52';
-	inherits(Elgato.ResetTotal, Characteristic);
+		LegrandMyHome.ResetTotal.UUID = 'E863F112-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.ResetTotal, Characteristic);
 
-	Elgato.Sensitivity = function() {
+	LegrandMyHome.Sensitivity = function() {
 		Characteristic.call(this, 'Sensitivity', 'E863F120-079E-48FF-8F27-9C2605A29F52');
 		this.setProps({
 			format: Characteristic.Formats.UINT16,
@@ -67,10 +67,10 @@ module.exports = function (homebridge) {
 		});
 		this.value = this.getDefaultValue();
 		};
-		Elgato.Sensitivity.UUID = 'E863F120-079E-48FF-8F27-9C2605A29F52';
-	inherits(Elgato.Sensitivity, Characteristic);
+		LegrandMyHome.Sensitivity.UUID = 'E863F120-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.Sensitivity, Characteristic);
 
-	Elgato.Duration = function() {
+	LegrandMyHome.Duration = function() {
 		Characteristic.call(this, 'Duration', 'E863F12D-079E-48FF-8F27-9C2605A29F52');
 		this.setProps({
 			format: Characteristic.Formats.UINT16,
@@ -81,10 +81,10 @@ module.exports = function (homebridge) {
 		});
 		this.value = this.getDefaultValue();
 		};
-		Elgato.Duration.UUID = 'E863F12D-079E-48FF-8F27-9C2605A29F52';
-	inherits(Elgato.Duration, Characteristic);
+		LegrandMyHome.Duration.UUID = 'E863F12D-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.Duration, Characteristic);
 
-	Elgato.LastActivation = function() {
+	LegrandMyHome.LastActivation = function() {
 		Characteristic.call(this, 'LastActivation', 'E863F11A-079E-48FF-8F27-9C2605A29F52');
 		this.setProps({
 			format: Characteristic.Formats.UINT32,
@@ -92,10 +92,10 @@ module.exports = function (homebridge) {
 		});
 		this.value = this.getDefaultValue();
 		};
-		Elgato.LastActivation.UUID = 'E863F11A-079E-48FF-8F27-9C2605A29F52';
-	inherits(Elgato.LastActivation, Characteristic);
+		LegrandMyHome.LastActivation.UUID = 'E863F11A-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.LastActivation, Characteristic);
 
-	Elgato.TimesOpened = function() {
+	LegrandMyHome.TimesOpened = function() {
 		Characteristic.call(this, 'TimesOpened', 'E863F129-079E-48FF-8F27-9C2605A29F52');
 		this.setProps({
 			format: Characteristic.Formats.UINT32,
@@ -103,10 +103,10 @@ module.exports = function (homebridge) {
 		});
 		this.value = this.getDefaultValue();
 		};
-		Elgato.TimesOpened.UUID = 'E863F129-079E-48FF-8F27-9C2605A29F52';
-	inherits(Elgato.TimesOpened, Characteristic);
+		LegrandMyHome.TimesOpened.UUID = 'E863F129-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.TimesOpened, Characteristic);
 
-	Elgato.Char118 = function() {
+	LegrandMyHome.Char118 = function() {
 		Characteristic.call(this, 'Char118', 'E863F118-079E-48FF-8F27-9C2605A29F52');
 		this.setProps({
 			format: Characteristic.Formats.UINT32,
@@ -114,10 +114,10 @@ module.exports = function (homebridge) {
 		});
 		this.value = this.getDefaultValue();
 		};
-		Elgato.Char118.UUID = 'E863F118-079E-48FF-8F27-9C2605A29F52';
-	inherits(Elgato.Char118, Characteristic);
+		LegrandMyHome.Char118.UUID = 'E863F118-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.Char118, Characteristic);
 
-	Elgato.Char119 = function() {
+	LegrandMyHome.Char119 = function() {
 		Characteristic.call(this, 'Char119', 'E863F119-079E-48FF-8F27-9C2605A29F52');
 		this.setProps({
 			format: Characteristic.Formats.UINT32,
@@ -125,32 +125,32 @@ module.exports = function (homebridge) {
 		});
 		this.value = this.getDefaultValue();
 		};
-		Elgato.Char119.UUID = 'E863F119-079E-48FF-8F27-9C2605A29F52';
-	inherits(Elgato.Char119, Characteristic);
+		LegrandMyHome.Char119.UUID = 'E863F119-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.Char119, Characteristic);
 
-	Elgato.PowerMeterService = function(displayName, subtype) {
+	LegrandMyHome.PowerMeterService = function(displayName, subtype) {
 			Service.call(this, displayName, '00000001-0000-1777-8000-775D67EC4377', subtype);
-			this.addCharacteristic(Elgato.CurrentPowerConsumption);
-			this.addCharacteristic(Elgato.TotalConsumption);
-			this.addCharacteristic(Elgato.ResetTotal);
+			this.addCharacteristic(LegrandMyHome.CurrentPowerConsumption);
+			this.addCharacteristic(LegrandMyHome.TotalConsumption);
+			this.addCharacteristic(LegrandMyHome.ResetTotal);
 	};
-	inherits(Elgato.PowerMeterService, Service);
+	inherits(LegrandMyHome.PowerMeterService, Service);
 
-	Elgato.FakeGatoHistoryService=FakeGatoHistoryService;
-	inherits(Elgato.FakeGatoHistoryService, Service);
+	LegrandMyHome.FakeGatoHistoryService=FakeGatoHistoryService;
+	inherits(LegrandMyHome.FakeGatoHistoryService, Service);
 
-	Elgato.ControlledLoadService = function(displayName, subtype) {
+	LegrandMyHome.ControlledLoadService = function(displayName, subtype) {
 			Service.call(this, displayName, 'D43133F2-9BDE-4731-9FF2-B427189DCB4A', subtype);
 			this.addCharacteristic(Characteristic.OutletInUse);
 			this.addCharacteristic(Characteristic.Active);
 	};
-	inherits(Elgato.ControlledLoadService, Service);
+	inherits(LegrandMyHome.ControlledLoadService, Service);
 
-	Elgato.RainSensorService = function(displayName, subtype) {
+	LegrandMyHome.RainSensorService = function(displayName, subtype) {
 			Service.call(this, displayName, '9018CDC8-DEF9-49D5-A969-63F8CCAAB1A6', subtype);
 			this.addCharacteristic(Characteristic.CurrentRelativeHumidity);
 	};
-	inherits(Elgato.RainSensorService, Service);
+	inherits(LegrandMyHome.RainSensorService, Service);
 
 	process.setMaxListeners(0);
 	homebridge.registerPlatform("homebridge-myhome", "LegrandMyHome", LegrandMyHome);
@@ -1260,8 +1260,8 @@ class MHPowerMeter {
 				this.acquiredSamples=0;
 				this.intPower=0;
 			}
-			this.powerMeterService.getCharacteristic(Elgato.CurrentPowerConsumption).getValue(null);
-				this.powerMeterService.getCharacteristic(Elgato.TotalConsumption).getValue(null);
+			this.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption).getValue(null);
+				this.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption).getValue(null);
 			
 			this.mh.getPower();
 		}.bind(this), this.refresh * 1000);
@@ -1281,24 +1281,24 @@ class MHPowerMeter {
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Name-" + this.name);
 
-		this.powerMeterService = new Elgato.PowerMeterService(this.name);
-		this.powerMeterService.getCharacteristic(Elgato.CurrentPowerConsumption)
+		this.powerMeterService = new LegrandMyHome.PowerMeterService(this.name);
+		this.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption)
 			.on('get', (callback) => {
 				this.log.debug(sprintf("getConsumptio = %s",this.value));
 				callback(null, this.value);
 			});
-		this.powerMeterService.getCharacteristic(Elgato.TotalConsumption)
+		this.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption)
 			.on('get', (callback) => {
 				this.log.debug(sprintf("getConsumptio = %f",this.totalenergy));
 				callback(null, this.totalenergy);
 			});
-		this.powerMeterService.getCharacteristic(Elgato.ResetTotal)
+		this.powerMeterService.getCharacteristic(LegrandMyHome.ResetTotal)
 			.on('set', (value, callback) => {
 				this.totalenergy = 0;
 				callback(null);
 			});
 		
-		this.powerLoggingService = new Elgato.FakeGatoHistoryService("energy", this);
+		this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this);
 		
 		return [service, this.powerMeterService, this.powerLoggingService];
 	}	
@@ -1376,12 +1376,12 @@ class MHDryContact {
 		switch (this.type) {
 			case 'Contact':
 				this.dryContactService = new Service.ContactSensor(this.name);
-				this.LoggingService = new Elgato.FakeGatoHistoryService("door", this);
-				this.dryContactService.addCharacteristic(Elgato.LastActivation);
-				this.dryContactService.addCharacteristic(Elgato.TimesOpened);
-				this.dryContactService.addCharacteristic(Elgato.ResetTotal);
-				this.dryContactService.addCharacteristic(Elgato.Char118);
-				this.dryContactService.addCharacteristic(Elgato.Char119);
+				this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("door", this);
+				this.dryContactService.addCharacteristic(LegrandMyHome.LastActivation);
+				this.dryContactService.addCharacteristic(LegrandMyHome.TimesOpened);
+				this.dryContactService.addCharacteristic(LegrandMyHome.ResetTotal);
+				this.dryContactService.addCharacteristic(LegrandMyHome.Char118);
+				this.dryContactService.addCharacteristic(LegrandMyHome.Char119);
 				this.dryContactService.getCharacteristic(Characteristic.ContactSensorState)
 					.on('get', (callback) => {
 					this.log.debug(sprintf("getContactSensorState %s = %s",this.address, this.state));
@@ -1394,12 +1394,12 @@ class MHDryContact {
 					if (this.state)
 						this.numberOpened++;
 					});
-				this.dryContactService.getCharacteristic(Elgato.ResetTotal)
+				this.dryContactService.getCharacteristic(LegrandMyHome.ResetTotal)
 					.on('set', (value, callback) => {
 						this.numberOpened = 0;
 						callback(null);
 					});
-				this.dryContactService.getCharacteristic(Elgato.TimesOpened)
+				this.dryContactService.getCharacteristic(LegrandMyHome.TimesOpened)
 					.on('get', (callback) => {
 						this.log.debug(sprintf("getNumberOpened = %f",this.numberOpened));
 						callback(null, this.numberOpened);
@@ -1417,11 +1417,11 @@ class MHDryContact {
 				break;
 			case 'Motion':
 				this.dryContactService = new Service.MotionSensor(this.name);
-				this.LoggingService = new Elgato.FakeGatoHistoryService("motion", this);
-				this.dryContactService.addCharacteristic(Elgato.Sensitivity);
-				this.dryContactService.addCharacteristic(Elgato.Duration);
-				this.dryContactService.addCharacteristic(Elgato.LastActivation);	
-				this.dryContactService.setCharacteristic(Elgato.Duration,this.duration);			
+				this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this);
+				this.dryContactService.addCharacteristic(LegrandMyHome.Sensitivity);
+				this.dryContactService.addCharacteristic(LegrandMyHome.Duration);
+				this.dryContactService.addCharacteristic(LegrandMyHome.LastActivation);	
+				this.dryContactService.setCharacteristic(LegrandMyHome.Duration,this.duration);			
 				this.dryContactService.getCharacteristic(Characteristic.MotionDetected)
 					.on('get', (callback) => {
 					this.log.debug(sprintf("getMotionSensorState %s = %s",this.address, this.state));
@@ -1432,7 +1432,7 @@ class MHDryContact {
 					this.log.debug(sprintf("changeMotionSensorState %s = %s",this.address, this.state));
 					this.LoggingService.addEntry({time: moment().unix(), status: this.state});
 					});
-				this.dryContactService.getCharacteristic(Elgato.Duration)
+				this.dryContactService.getCharacteristic(LegrandMyHome.Duration)
 					.on('set', (value, callback) => {
 						this.duration = value;
 						callback(null);
@@ -1630,7 +1630,7 @@ class MHControlledLoad {
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Priority " + this.address);
 
-		this.controlledLoad = new Elgato.ControlledLoadService(this.name);
+		this.controlledLoad = new LegrandMyHome.ControlledLoadService(this.name);
 
 		this.controlledLoad.getCharacteristic(Characteristic.Active)
 			.on('set', (value,callback) => {
