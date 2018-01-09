@@ -366,20 +366,6 @@ class LegrandMyHome {
 		this.devices.forEach(function(accessory) {
 			if (accessory.powerMeterService !== undefined) {
 				accessory.value  = _value;
-				/*accessory.totalenergy = accessory.totalenergy + _value * accessory.refresh / 3600 / 1000;
-				accessory.intPower = accessory.intPower + _value;
-				if (accessory.acquiredSamples<accessory.averagedSampleForHistory-1)
-				{
-					accessory.acquiredSamples++;
-				}
-				else
-				{
-					accessory.powerLoggingService.addEntry({time: moment().unix(), power:(accessory.intPower)/(accessory.averagedSampleForHistory)});
-					accessory.acquiredSamples=0;
-					accessory.intPower=0;
-				}
-				accessory.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption).getValue(null);
-				accessory.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption).getValue(null);*/
 			}
 		}.bind(this));
 	}
