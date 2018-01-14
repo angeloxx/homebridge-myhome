@@ -1354,7 +1354,8 @@ class MHDryContact {
 		this.type = config.type;
 		this.numberOpened = 0;
 		this.durationhandle = null;
-		this.duration = 30;
+		this.duration = config.duration || 30;
+		this.firstGet = true;
 
 		this.state = config.state || false;
 		this.log.info(sprintf("LegrandMyHome::MHDryContact create object: %s", this.address));
@@ -1385,6 +1386,10 @@ class MHDryContact {
 				this.dryContactService.getCharacteristic(Characteristic.ContactSensorState)
 					.on('get', (callback) => {
 					this.log.debug(sprintf("getContactSensorState %s = %s",this.address, this.state));
+					if (this.firstGet) {
+						this.firstGet = false;
+						this.LoggingService.addEntry({time: moment().unix(), status: this.state});	
+					}
 					callback(null, this.state);
 					});
 				this.dryContactService.getCharacteristic(Characteristic.ContactSensorState)
@@ -1425,6 +1430,10 @@ class MHDryContact {
 				this.dryContactService.getCharacteristic(Characteristic.MotionDetected)
 					.on('get', (callback) => {
 					this.log.debug(sprintf("getMotionSensorState %s = %s",this.address, this.state));
+					if (this.firstGet) {
+						this.firstGet = false;
+						this.LoggingService.addEntry({time: moment().unix(), status: this.state});	
+					}
 					callback(null, this.state);
 				});
 				this.dryContactService.getCharacteristic(Characteristic.MotionDetected)
