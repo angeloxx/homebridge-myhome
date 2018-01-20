@@ -1356,7 +1356,7 @@ class MHDryContact {
 		this.durationhandle = null;
 		this.duration = config.duration || 30;
 		this.firstGet = true;
-
+		this.lastOpening = 0;
 		this.state = config.state || false;
 		this.log.info(sprintf("LegrandMyHome::MHDryContact create object: %s", this.address));
 	}
@@ -1388,7 +1388,8 @@ class MHDryContact {
 					this.log.debug(sprintf("getContactSensorState %s = %s",this.address, this.state));
 					if (this.firstGet) {
 						this.firstGet = false;
-						this.LoggingService.addEntry({time: moment().unix(), status: this.state});	
+						this.LoggingService.addEntry({time: moment().unix(), status: this.state});
+						this.offset = moment().unix();	
 					}
 					callback(null, this.state);
 					});
@@ -1396,6 +1397,7 @@ class MHDryContact {
 					.on('change', () => {
 					this.log.debug(sprintf("changeContactSensorState %s = %s",this.address, this.state));
 					this.LoggingService.addEntry({time: moment().unix(), status: this.state});
+					this.lastOpening = moment().unix()-this.offset;
 					if (this.state)
 						this.numberOpened++;
 					});
@@ -1408,6 +1410,11 @@ class MHDryContact {
 					.on('get', (callback) => {
 						this.log.debug(sprintf("getNumberOpened = %f",this.numberOpened));
 						callback(null, this.numberOpened);
+					});
+				this.dryContactService.getCharacteristic(LegrandMyHome.LastActivation)
+					.on('get', (callback) => {
+						this.log.debug(sprintf("lastOpening = %f",this.lastOpening));
+						callback(null, this.lastOpening);
 					});
 				return [service, this.dryContactService, this.LoggingService];
 				break;
@@ -1432,6 +1439,7 @@ class MHDryContact {
 					this.log.debug(sprintf("getMotionSensorState %s = %s",this.address, this.state));
 					if (this.firstGet) {
 						this.firstGet = false;
+						this.offset = moment().unix();	
 						this.LoggingService.addEntry({time: moment().unix(), status: this.state});	
 					}
 					callback(null, this.state);
@@ -1440,6 +1448,7 @@ class MHDryContact {
 					.on('change', () => {
 					this.log.debug(sprintf("changeMotionSensorState %s = %s",this.address, this.state));
 					this.LoggingService.addEntry({time: moment().unix(), status: this.state});
+					this.lastOpening = moment().unix()-this.offset;
 					});
 				this.dryContactService.getCharacteristic(LegrandMyHome.Duration)
 					.on('set', (value, callback) => {
@@ -1448,6 +1457,11 @@ class MHDryContact {
 					})
 					.on('get', (callback) => {
 						callback(null, this.duration);
+					});
+				this.dryContactService.getCharacteristic(LegrandMyHome.LastActivation)
+					.on('get', (callback) => {
+						this.log.debug(sprintf("lastOpening = %f",this.lastOpening));
+						callback(null, this.lastOpening);
 					});
 				
 				return [service, this.dryContactService, this.LoggingService];
