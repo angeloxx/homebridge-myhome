@@ -291,16 +291,23 @@ class LegrandMyHome {
 					if (_state==true)
 					{
 						accessory.state = true;
-					accessory.dryContactService.getCharacteristic(Characteristic.MotionDetected).getValue(null);
+						accessory.dryContactService.getCharacteristic(Characteristic.MotionDetected).getValue(null);
 						clearTimeout(accessory.durationhandle);
 						accessory.durationhandle = setTimeout(function() { 
             				accessory.state = false;
-						accessory.dryContactService.getCharacteristic(Characteristic.MotionDetected).getValue(null); 
+							accessory.dryContactService.getCharacteristic(Characteristic.MotionDetected).getValue(null); 
        					}.bind(this), accessory.duration * 1000);
 					}
+					else
+						if (accessory.firstGet == true)
+						{
+							accessory.state = _state;
+							accessory.dryContactService.getCharacteristic(Characteristic.MotionDetected).getValue(null);
+						}
 					break;
 				default:	
-					accessory.state = _state;	accessory.dryContactService.getCharacteristic(Characteristic.ContactSensorState).getValue(null);
+					accessory.state = _state;
+					accessory.dryContactService.getCharacteristic(Characteristic.ContactSensorState).getValue(null);
 					break;
 				}	
 			}
@@ -1298,7 +1305,8 @@ class MHPowerMeter {
 				callback(null);
 			});
 		
-		this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this);
+		//this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this,{storage: 'fs', path: this.config.parent.api.user.cachedAccessoryPath()});
+		this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this,{storage: 'googleDrive', path: 'homebridge'});
 		
 		return [service, this.powerMeterService, this.powerLoggingService];
 	}	
@@ -1359,7 +1367,7 @@ class MHDryContact {
 		this.lastOpening = 0;
 		this.state = config.state || false;
 		this.log.info(sprintf("LegrandMyHome::MHDryContact create object: %s", this.address));
-		this.cacheFilename = path.join(config.parent.api.user.cachedAccessoryPath(),this.displayName+'.json');	
+		this.cacheFilename = path.join(this.config.parent.api.user.cachedAccessoryPath(),this.displayName+'.json');	
 	}
 
 	identify(callback) {
@@ -1378,7 +1386,8 @@ class MHDryContact {
 		switch (this.type) {
 			case 'Contact':
 				this.dryContactService = new Service.ContactSensor(this.name);
-				this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("door", this);
+				//this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("door", this,{storage: 'fs', path: this.config.parent.api.user.cachedAccessoryPath()});
+				this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("door", this,{storage: 'googleDrive', path: 'homebridge'});
 				this.dryContactService.addCharacteristic(LegrandMyHome.LastActivation);
 				this.dryContactService.addCharacteristic(LegrandMyHome.TimesOpened);
 				this.dryContactService.addCharacteristic(LegrandMyHome.ResetTotal);
@@ -1438,7 +1447,8 @@ class MHDryContact {
 				break;
 			case 'Motion':
 				this.dryContactService = new Service.MotionSensor(this.name);
-				this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this);
+				//this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'fs', path: this.config.parent.api.user.cachedAccessoryPath()});
+				this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'googleDrive', path: 'homebridge'});
 				this.dryContactService.addCharacteristic(LegrandMyHome.Sensitivity);
 				this.dryContactService.addCharacteristic(LegrandMyHome.Duration);
 				this.dryContactService.addCharacteristic(LegrandMyHome.LastActivation);	
