@@ -1,3 +1,4 @@
+/*jshint esversion: 6,node: true,-W041: false */
 var path = require("path");	
 var mh = require(path.join(__dirname,'/lib/mhclient'));
 var sprintf = require("sprintf-js").sprintf, inherits = require("util").inherits, Promise = require('promise');
@@ -169,23 +170,23 @@ class LegrandMyHome {
 		this.config.devices.forEach(function (accessory) {
 			this.log.info("LegrandMyHome: adds accessory");
 			accessory.parent = this;
-			if (accessory.accessory == 'MHRelay') this.devices.push(new MHRelay(this.log,accessory))
-			if (accessory.accessory == 'MHBlind') this.devices.push(new MHBlind(this.log,accessory))
-			if (accessory.accessory == 'MHBlindAdvanced') this.devices.push(new MHBlindAdvanced(this.log,accessory))
-			if (accessory.accessory == 'MHOutlet') this.devices.push(new MHRelay(this.log,accessory))
-			if (accessory.accessory == 'MHTimedRelay') this.devices.push(new MHTimedRelay(this.log,accessory))
-			if (accessory.accessory == 'MHRain') this.devices.push(new MHRain(this.log,accessory))
-			if (accessory.accessory == 'MHDimmer') this.devices.push(new MHDimmer(this.log,accessory))
-			if (accessory.accessory == 'MHThermostat') this.devices.push(new MHThermostat(this.log,accessory))
-			if (accessory.accessory == 'MHExternalThermometer') this.devices.push(new MHThermometer(this.log,accessory))
+			if (accessory.accessory == 'MHRelay') this.devices.push(new MHRelay(this.log,accessory));
+			if (accessory.accessory == 'MHBlind') this.devices.push(new MHBlind(this.log,accessory));
+			if (accessory.accessory == 'MHBlindAdvanced') this.devices.push(new MHBlindAdvanced(this.log,accessory));
+			if (accessory.accessory == 'MHOutlet') this.devices.push(new MHRelay(this.log,accessory));
+			if (accessory.accessory == 'MHTimedRelay') this.devices.push(new MHTimedRelay(this.log,accessory));
+			if (accessory.accessory == 'MHRain') this.devices.push(new MHRain(this.log,accessory));
+			if (accessory.accessory == 'MHDimmer') this.devices.push(new MHDimmer(this.log,accessory));
+			if (accessory.accessory == 'MHThermostat') this.devices.push(new MHThermostat(this.log,accessory));
+			if (accessory.accessory == 'MHExternalThermometer') this.devices.push(new MHThermometer(this.log,accessory));
 		
-			if (accessory.accessory == 'MHDryContact') this.devices.push(new MHDryContact(this.log,accessory))
-			if (accessory.accessory == 'MHAux') this.devices.push(new MHAux(this.log,accessory))
+			if (accessory.accessory == 'MHDryContact') this.devices.push(new MHDryContact(this.log,accessory));
+			if (accessory.accessory == 'MHAux') this.devices.push(new MHAux(this.log,accessory));
 			
 			/* if (accessory.accessory == 'MHButton') this.devices.push(new MHButton(this.log,accessory)) */
-			if (accessory.accessory == 'MHPowerMeter') this.devices.push(new MHPowerMeter(this.log,accessory))
-			if (accessory.accessory == 'MHAlarm') this.devices.push(new MHAlarm(this.log,accessory))
-			if (accessory.accessory == 'MHControlledLoad') this.devices.push(new MHControlledLoad(this.log,accessory))
+			if (accessory.accessory == 'MHPowerMeter') this.devices.push(new MHPowerMeter(this.log,accessory));
+			if (accessory.accessory == 'MHAlarm') this.devices.push(new MHAlarm(this.log,accessory));
+			if (accessory.accessory == 'MHControlledLoad') this.devices.push(new MHControlledLoad(this.log,accessory));
 		}.bind(this));
 		this.log.info("LegrandMyHome for MyHome Gateway at " + config.ipaddress + ":" + config.port);
 		this.controller.start();
@@ -755,7 +756,7 @@ class MHRelay {
 				} else if (!this.power && this.config.frame_off != null) {
 					this.mh.send(this.config.frame_off);
 				} else {
-					this.mh.relayCommand(this.address,this.power)
+					this.mh.relayCommand(this.address,this.power);
 				}
 				callback(null);
 			})
@@ -823,7 +824,7 @@ class MHTimedRelay {
 				}
 				else
 				{
-					this.mh.relayCommand(this.address,this.power)
+					this.mh.relayCommand(this.address,this.power);
 				}
 				callback(null);
 			})
@@ -920,19 +921,19 @@ class MHBlind {
 		if (this.runningDirection == Characteristic.PositionState.STOPPED && this.state != Characteristic.PositionState.STOPPED) {
 			this.runningStartTime = new Date();
 			this.runningDirection = this.state;
-			this.log.debug(sprintf("Starting position is %d", this.currentPosition))
+			this.log.debug(sprintf("Starting position is %d", this.currentPosition));
 		} else {
 			if (this.runningDirection != Characteristic.PositionState.STOPPED && this.state == Characteristic.PositionState.STOPPED) {
 				if (this.runningDirection == 	Characteristic.PositionState.INCREASING) {
-					this.currentPosition = Math.min(100,this.currentPosition + (100 / (this.time*1000) * (((new Date())-this.runningStartTime+this.startDelayMs)*(1+this.timeAdjust/100))))
+					this.currentPosition = Math.min(100,this.currentPosition + (100 / (this.time*1000) * (((new Date())-this.runningStartTime+this.startDelayMs)*(1+this.timeAdjust/100))));
 				} else {
-					this.currentPosition = Math.max(0,this.currentPosition - (100 / (this.time*1000) * (((new Date())-this.runningStartTime+this.startDelayMs)*(1+this.timeAdjust/100))))
+					this.currentPosition = Math.max(0,this.currentPosition - (100 / (this.time*1000) * (((new Date())-this.runningStartTime+this.startDelayMs)*(1+this.timeAdjust/100))));
 				}
 				this.runningDirection = this.state;
 				this.targetPosition = this.currentPosition;
 				this.runningStartTime = -1;
 
-				this.log.debug(sprintf("Ending position is %d", this.currentPosition))
+				this.log.debug(sprintf("Ending position is %d", this.currentPosition));
 			} else {
 				/* Uhm... */
 			}
@@ -1101,7 +1102,7 @@ class MHDimmer {
 				if (this.power && this.bri == 0) {
 					this.bri = 100;
 				}
-				this.mh.relayCommand(this.address,this.power)
+				this.mh.relayCommand(this.address,this.power);
 				callback(null);
 			})
 			.on('get', (callback) => {
@@ -1114,7 +1115,7 @@ class MHDimmer {
 				this.log.debug(sprintf("setBrightness %s = %d",this.address, level));
 				this.bri = parseInt(level);
 				this.power = (this.bri > 0);
-				this.mh.dimmerCommand(this.address,this.bri)
+				this.mh.dimmerCommand(this.address,this.bri);
 				callback(null);
 			})
 			.on('get', (callback) => {
@@ -1247,8 +1248,8 @@ class MHPowerMeter {
 		this.log = log;
 		this.refresh = config.refresh || 15;
 
-		this.intPower = 0 
-		this.acquiredSamples = 0
+		this.intPower = 0;
+		this.acquiredSamples = 0;
 		this.averagedSampleForHistory = 600/this.refresh;
 			
 		this.value = 0;
@@ -1435,7 +1436,6 @@ class MHDryContact {
 						callback(null, this.lastOpening);
 					});
 				return [service, this.dryContactService, this.LoggingService];
-				break;
 			case 'Leak':
 				this.dryContactService = new Service.LeakSensor(this.name);
 				this.dryContactService.getCharacteristic(Characteristic.LeakDetected)
@@ -1444,7 +1444,6 @@ class MHDryContact {
 					callback(null, this.state);
 				});
 				return [service, this.dryContactService];
-				break;
 			case 'Motion':
 				this.dryContactService = new Service.MotionSensor(this.name);
 				//this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'fs', path: this.config.parent.api.user.cachedAccessoryPath()});
@@ -1492,7 +1491,6 @@ class MHDryContact {
 					});
 				
 				return [service, this.dryContactService, this.LoggingService];
-				break;
 			default:
 				this.dryContactService = new Service.ContactSensor(this.name);
 				this.dryContactService.getCharacteristic(Characteristic.ContactSensorState)
@@ -1501,7 +1499,6 @@ class MHDryContact {
 					callback(null, this.state);
 					});
 				return [service, this.dryContactService];
-				break;
 		}
 
 		
@@ -1624,7 +1621,7 @@ class MHAlarm {
 			.on('set', (value,callback) => {
 				this.log.debug(sprintf("alarm set target= %d", this.target));
 				callback(null);
-			})
+			});
 		this.alarmService.getCharacteristic(Characteristic.StatusFault)
 			.on('get', (callback) => {
 				this.log.debug(sprintf("getConsumptio = %s",this.value));
