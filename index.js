@@ -1368,7 +1368,6 @@ class MHDryContact {
 		this.lastOpening = 0;
 		this.state = config.state || false;
 		this.log.info(sprintf("LegrandMyHome::MHDryContact create object: %s", this.address));
-		this.cacheFilename = path.join(this.config.parent.api.user.cachedAccessoryPath(),this.displayName+'.json');	
 	}
 
 	identify(callback) {
@@ -1400,15 +1399,7 @@ class MHDryContact {
 					if (this.firstGet) {
 						this.firstGet = false;
 						this.LoggingService.addEntry({time: moment().unix(), status: this.state});
-						if (fs.existsSync(this.cacheFilename))
-						{
-							this.offset = JSON.parse(fs.readFileSync(this.cacheFilename));
-						}
-						else
-						{
-							this.offset = moment().unix();
-							fs.writeFileSync(this.cacheFilename,JSON.stringify(this.offset));
-						}
+						this.offset = this.LoggingService.getInitialTime();
 					}
 					callback(null, this.state);
 					});
@@ -1458,15 +1449,7 @@ class MHDryContact {
 					if (this.firstGet) {
 						this.firstGet = false;
 						this.LoggingService.addEntry({time: moment().unix(), status: this.state});
-						if (fs.existsSync(this.cacheFilename))
-						{
-							this.offset = JSON.parse(fs.readFileSync(this.cacheFilename));
-						}
-						else
-						{
-							this.offset = moment().unix();
-							fs.writeFileSync(this.cacheFilename,JSON.stringify(this.offset));
-						}
+						this.offset = this.LoggingService.getInitialTime();
 					}
 					callback(null, this.state);
 				});
