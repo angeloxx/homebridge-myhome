@@ -1,6 +1,6 @@
 {
   "name": "homebridge-myhome-tng",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Legrand MyHome plugin for homebridge: https://github.com/nfarina/homebridge",
   "license": "MIT",
   "keywords": [
@@ -18,18 +18,15 @@
     "url": "https://github.com/simont77/homebridge-myhome"
   },
   "dependencies": {
-    "colorsys": "^1.0.9",
     "debug": "^2.4.5",
     "net": "^1.0.0",
     "promise": "^7.0.0",
     "sha1": "^1.1.1",
     "sha256": "^0.2.0",
-    "sprint-js": "^0.1.0",
     "sprintf-js": "^1.0.3",
-    "wait-until": "^0.0.2",
     "inherits": "^2.0.0",
     "moment": "^2.18.1",
     "correcting-interval":"^2.0.0",
-    "fakegato-history":"^0.3.8"
+    "fakegato-history":"^0.3.9"
   }
 }
