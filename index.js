@@ -207,6 +207,8 @@ class LegrandMyHome {
 				this.controller.getRelayState(accessory.address);
 			if (accessory.rainService !== undefined && accessory.pul == true)
 				this.controller.getRelayState(accessory.address);
+			if (accessory.IrrigationService !== undefined && accessory.pul == true)
+				this.controller.getRelayState(accessory.address);
 			if (accessory.alarmService !== undefined)
 				this.controller.getAlarmState();
 		}.bind(this));
@@ -235,6 +237,7 @@ class LegrandMyHome {
 				}
 				if (accessory.address == _address && accessory.IrrigationService !== undefined) {
 					accessory.power = _onoff;
+					accessory.askDuration = true;
 					accessory.IrrigationService.getCharacteristic(Characteristic.Active).getValue(null);
 					accessory.IrrigationService.getCharacteristic(Characteristic.InUse).getValue(null);
 				}
@@ -285,8 +288,9 @@ class LegrandMyHome {
 	onRelayDuration(_address,_value) {
 		this.devices.forEach(function(accessory) {
 			if (accessory.address == _address && accessory.IrrigationService !== undefined) {
-				accessory.timer = _value;
-			accessory.IrrigationService.getCharacteristic(Characteristic.SetDuration).getValue(null);	
+				if (accessory.askDuration)
+					accessory.timer = _value;
+				accessory.IrrigationService.getCharacteristic(Characteristic.SetDuration).getValue(null);	
 			}
 		}.bind(this));
 	}
@@ -1728,7 +1732,9 @@ class MHIrrigation {
 		this.log = log;
 		this.power = false;
 		this.askDuration = false;
+		this.RemDuration = 1;
 		this.timer = config.timer || 1;
+		this.timerHandle = 0;
 		this.log.info(sprintf("LegrandMyHome::MHIrrigation create object: %s", this.address));
 		this.mh.addLightBusDevice(this.address);
 
@@ -1751,19 +1757,20 @@ class MHIrrigation {
 		this.IrrigationService.setCharacteristic(Characteristic.ValveType,1);
 		this.IrrigationService.getCharacteristic(Characteristic.Active)
 			.on('set', (_value, callback) => {
-				//this.log.debug(sprintf("setPower %s = %s",this.address, level));
+				this.log.debug(sprintf("setIrrigation %s = %s",this.address, _value));
 				this.power = _value;
 	
 				if (this.power)
 				{
 					var address = this.mh._slashesToAddress(this.address);
-					this.mh.send(sprintf("*#1*%s*#2*0*%d*0##",address,this.timer/60));
+					this.mh.send(sprintf("*#1*%s*#2*0*%d*%d##",address,this.timer/60, this.timer%60));
 				}
 				else
 				{
 					this.mh.relayCommand(this.address,this.power);
 					clearInterval(this.timerHandle);
 					this.RemDuration = this.timer;
+					this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
 				}
 				callback(null);
 			})
@@ -1788,26 +1795,25 @@ class MHIrrigation {
 			})
 			.on('get', (callback) => {
 				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
-				if (this.power && this.timer !=0)
+				if (this.power && this.timer !=0 && this.timerHandle==0)
 				{
 					this.RemDuration = this.timer;
-					this.timerHandle = setInterval((function() {
-					this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
+					this.timerHandle = setInterval(function() {
+						this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
 						this.RemDuration--;
 						if (this.RemDuration == 0)
 							clearInterval(this.timerHandle);
 					}.bind(this),1000);
 				}
-				callback(null, this.timer);
+				callback(null, this.timer);	
 			});
 		this.IrrigationService.getCharacteristic(Characteristic.RemainingDuration)
 			.on('set', (time, callback) => {
-				this.RemainingDuration = time;
+				this.RemDuration = time;
 				callback(null);
 			})
 			.on('get', (callback) => {
-				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
-				callback(null, this.remainingDuration);
+				callback(null, this.RemDuration);
 			});
 		
 		
