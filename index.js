@@ -187,6 +187,8 @@ class LegrandMyHome {
 			if (accessory.accessory == 'MHPowerMeter') this.devices.push(new MHPowerMeter(this.log,accessory));
 			if (accessory.accessory == 'MHAlarm') this.devices.push(new MHAlarm(this.log,accessory));
 			if (accessory.accessory == 'MHControlledLoad') this.devices.push(new MHControlledLoad(this.log,accessory));
+			if (accessory.accessory == 'MHIrrigation') this.devices.push(new MHIrrigation(this.log,accessory));
+			
 		}.bind(this));
 		this.log.info("LegrandMyHome for MyHome Gateway at " + config.ipaddress + ":" + config.port);
 		this.controller.start();
@@ -231,6 +233,11 @@ class LegrandMyHome {
 					accessory.power = _onoff;
 					accessory.OutletService.getCharacteristic(Characteristic.On).getValue(null);
 				}
+				if (accessory.address == _address && accessory.IrrigationService !== undefined) {
+					accessory.power = _onoff;
+					accessory.IrrigationService.getCharacteristic(Characteristic.Active).getValue(null);
+					accessory.IrrigationService.getCharacteristic(Characteristic.InUse).getValue(null);
+				}
 			}.bind(this));
 		else
 			if (a==0)
@@ -274,7 +281,16 @@ class LegrandMyHome {
 				accessory.contactSensorService.getCharacteristic(Characteristic.ContactSensorState).getValue(null);
 			}
 		}.bind(this));
-	}	
+	}
+	onRelayDuration(_address,_value) {
+		this.devices.forEach(function(accessory) {
+			if (accessory.address == _address && accessory.IrrigationService !== undefined) {
+				accessory.timer = _value;
+			accessory.IrrigationService.getCharacteristic(Characteristic.SetDuration).getValue(null);	
+			}
+		}.bind(this));
+	}
+	
 	
 	onDryContact(_address,_state) {
 		this.devices.forEach(function(accessory) {
@@ -1697,4 +1713,104 @@ class MHControlledLoad {
 		return [service, this.controlledLoad];
 	}	
 	
+}
+
+class MHIrrigation {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.groups = config.groups || []; 		/* TODO */
+		this.pul = config.pul || false; 						
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("irrigation-%s",config.address));
+		this.log = log;
+		this.power = false;
+		this.askDuration = false;
+		this.timer = config.timer || 1;
+		this.log.info(sprintf("LegrandMyHome::MHIrrigation create object: %s", this.address));
+		this.mh.addLightBusDevice(this.address);
+
+		var address = this.address.split("/"); 
+        this.bus = parseInt(address[0]);
+		this.ambient = parseInt(address[1]);
+		this.pl = parseInt(address[2]);
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
+			.setCharacteristic(Characteristic.Model, "Irrigation")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		
+		this.IrrigationService = new Service.Valve(this.name);
+		this.IrrigationService.setCharacteristic(Characteristic.ValveType,1);
+		this.IrrigationService.getCharacteristic(Characteristic.Active)
+			.on('set', (_value, callback) => {
+				//this.log.debug(sprintf("setPower %s = %s",this.address, level));
+				this.power = _value;
+	
+				if (this.power)
+				{
+					var address = this.mh._slashesToAddress(this.address);
+					this.mh.send(sprintf("*#1*%s*#2*0*%d*0##",address,this.timer/60));
+				}
+				else
+				{
+					this.mh.relayCommand(this.address,this.power);
+					clearInterval(this.timerHandle);
+					this.RemDuration = this.timer;
+				}
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
+				callback(null, this.power);
+			});
+		this.IrrigationService.getCharacteristic(Characteristic.InUse)
+			.on('get', (callback) => {
+				if (this.power && this.askDuration)
+				{
+					var address = this.mh._slashesToAddress(this.address);
+					this.mh.send(sprintf("*#1*%s*2##",address));
+					this.askDuration = false;
+				}
+				callback(null, this.power);
+			});	
+		this.IrrigationService.getCharacteristic(Characteristic.SetDuration)
+			.on('set', (time, callback) => {
+				this.timer = time;
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
+				if (this.power && this.timer !=0)
+				{
+					this.RemDuration = this.timer;
+					this.timerHandle = setInterval((function() {
+					this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
+						this.RemDuration--;
+						if (this.RemDuration == 0)
+							clearInterval(this.timerHandle);
+					}.bind(this),1000);
+				}
+				callback(null, this.timer);
+			});
+		this.IrrigationService.getCharacteristic(Characteristic.RemainingDuration)
+			.on('set', (time, callback) => {
+				this.RemainingDuration = time;
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
+				callback(null, this.remainingDuration);
+			});
+		
+		
+		return [service, this.IrrigationService];
+	}
 }
