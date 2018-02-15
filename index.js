@@ -288,9 +288,20 @@ class LegrandMyHome {
 	onRelayDuration(_address,_value) {
 		this.devices.forEach(function(accessory) {
 			if (accessory.address == _address && accessory.IrrigationService !== undefined) {
-				if (accessory.askDuration)
-					accessory.timer = _value;
-				accessory.IrrigationService.getCharacteristic(Characteristic.SetDuration).getValue(null);	
+				//if (accessory.adjustDuration)
+				//	accessory.timer = _value;
+				//accessory.IrrigationService.getCharacteristic(Characteristic.SetDuration).getValue(null);
+				if (accessory.power && accessory.timer !=0)
+				{
+					accessory.RemDuration = accessory.timer;
+					accessory.timerHandle = setInterval(function() {
+					accessory.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,accessory.RemDuration);
+						accessory.RemDuration--;
+						if (accessory.RemDuration == 0)
+							clearInterval(accessory.timerHandle);
+					}.bind(this),1000);
+				}
+					
 			}
 		}.bind(this));
 	}
@@ -1731,7 +1742,6 @@ class MHIrrigation {
 		this.UUID = UUIDGen.generate(sprintf("irrigation-%s",config.address));
 		this.log = log;
 		this.power = false;
-		this.askDuration = false;
 		this.RemDuration = 1;
 		this.timer = config.timer || 1;
 		this.timerHandle = 0;
@@ -1759,52 +1769,53 @@ class MHIrrigation {
 			.on('set', (_value, callback) => {
 				this.log.debug(sprintf("setIrrigation %s = %s",this.address, _value));
 				this.power = _value;
-	
 				if (this.power)
 				{
 					var address = this.mh._slashesToAddress(this.address);
-					this.mh.send(sprintf("*#1*%s*#2*0*%d*%d##",address,this.timer/60, this.timer%60));
+					this.mh.send(sprintf("*#1*%s*#2*0*%d*%d##",address,this.timer/60, this.timer%60));	
 				}
 				else
 				{
 					this.mh.relayCommand(this.address,this.power);
-					clearInterval(this.timerHandle);
-					this.RemDuration = this.timer;
-					this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
 				}
+				
 				callback(null);
 			})
 			.on('get', (callback) => {
-				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
+				this.log.debug(sprintf("getIrrigation %s = %s",this.address, this.power));
 				callback(null, this.power);
+			/*})
+			.on('change',() => {
+				if(!this.power)
+				{
+					clearInterval(this.timerHandle);
+					this.RemDuration = this.timer;
+				this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
+				}*/		
 			});
 		this.IrrigationService.getCharacteristic(Characteristic.InUse)
 			.on('get', (callback) => {
-				if (this.power && this.askDuration)
+				callback(null, this.power);
+			})
+			.on('change',() => {
+				if (this.power) // && this.askDuration)
 				{
 					var address = this.mh._slashesToAddress(this.address);
 					this.mh.send(sprintf("*#1*%s*2##",address));
-					this.askDuration = false;
 				}
-				callback(null, this.power);
+				else
+				{
+					clearInterval(this.timerHandle);
+					this.RemDuration = this.timer;
+				this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
+				}	
 			});	
 		this.IrrigationService.getCharacteristic(Characteristic.SetDuration)
 			.on('set', (time, callback) => {
 				this.timer = time;
 				callback(null);
 			})
-			.on('get', (callback) => {
-				this.log.debug(sprintf("getPower %s = %s",this.address, this.power));
-				if (this.power && this.timer !=0 && this.timerHandle==0)
-				{
-					this.RemDuration = this.timer;
-					this.timerHandle = setInterval(function() {
-						this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
-						this.RemDuration--;
-						if (this.RemDuration == 0)
-							clearInterval(this.timerHandle);
-					}.bind(this),1000);
-				}
+			.on('get', (callback) => {	
 				callback(null, this.timer);	
 			});
 		this.IrrigationService.getCharacteristic(Characteristic.RemainingDuration)
