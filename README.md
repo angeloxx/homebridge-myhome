@@ -6,14 +6,15 @@ Legrand MyHome (http://www.homesystems-legrandgroup.com/BtHomeSystems/home.actio
 - thermoregulation 
 - curtains, doors
 - security systems
+- contact and motion sensors
 
 With this plugin, the support of a IP gateway installed in your plant and a configuration of all installed 
 systems (MyHome does not support the autodiscovery of the system) you can control it. You need to disable the OpenWebNet password-based
 authentication from the IP of the device that runs homebridge (ie. Raspberry) or set the auhentication to HMAC; 
 HMAC authentication is supported by all recent IP gateways or older one with updated firmware (eg. F454 with v2 firmware).
 
-# Installation (TBD)
-Install plugin with npm install -g homebridge-myhome
+# Installation
+Install plugin with npm install -g simont77/homebridge-myhome
 Add platform within config.json of you homebridge instance:
 
     {
@@ -22,6 +23,7 @@ Add platform within config.json of you homebridge instance:
             "ipaddress": "192.168.1.1",
             "password": "12345",
             "discovery": false,
+            "setclock": true,
             "devices": [
                     /*Static list of devices*/
                 ]
@@ -38,16 +40,6 @@ Add platform within config.json of you homebridge instance:
 
 Restart homebridge
 Enjoy!
-
-# Installation
-
-Run as root:
-
-    npm -g install homebridge-myhome-tng
-   
-Create your config.json file starting from the template (sample-config.json) and then:
-
-    homebridge -U .
 
 Sample log is:
 
@@ -88,52 +80,7 @@ Sample log is:
 
 ## Configuration
 
-Only the platforms section of the config.json file should be edited, the pair code and the port in bridge section can be ignored in most of the cases. A little sample:
-
-    {
-        "platforms": [{
-            "platform": "LegrandMyHome",
-            "ipaddress": "192.168.157.207",
-            "port": 20000,
-            "ownpassword": "12345",
-            "discovery": false,
-            "devices": [{
-                "accessory": "MHRelay",
-                "name": "Bathroom Light",
-                "address": "0/1/5"
-                },{
-                "accessory": "MHRelay",
-                "name": "Night hallway Light",
-                "address": "0/1/1"
-                },{
-                "accessory": "MHRelay",
-                "name": "Office",
-                "address": "0/1/4"
-                },{
-                "accessory": "MHDimmer",
-                "name": "Master bedroom Central",
-                "address": "0/1/2"
-                },{
-                "accessory": "MHThermostat",
-                "name": "Living Room Thermostat",
-                "address": "21"
-                },{
-                "accessory": "MHThermostatExternal",
-                "name": "External Thermo Sensor",
-                "address": "1"
-                }]
-            }],
-        "bridge": {
-            "username": "CC:22:3D:E3:CE:31", 
-            "name": "MyHome HomeBridge Adapter", 
-            "pin": "342-52-220", 
-            "port": 51827
-        }, 
-        "description": "My MyHome Home System",
-        "accessories": [
-        ]
-    }
-
+Only the platforms section of the config.json file should be edited, the pair code and the port in bridge section can be ignored in most of the cases. 
 The first part of the config file contains details about the MyHome Gateway used to interface the IP network with the plant:
 
         "platforms": [{
@@ -142,13 +89,14 @@ The first part of the config file contains details about the MyHome Gateway used
             "port": 20000,
             "ownpassword": "12345",
             "discovery": false,
+            "setclock": true,
             "devices": [{
 
 You need to change:
 - ipaddress: put the IP address or name of the MyHome Gateway (eg. F454 or MH201, I'm not so updated about all gateways that BTicino-Legrand releases after 2015); the IP should be static but in the future I can implement a UPNP dicovery because all gateways supports that method
 - port: should be 20000 and keep this value
 - ownpassword: the OpenWebNet password, default is 12345 but everyone will suggest to you to change it with another password (4 to 9 digits), but you will keep the default one, I know...
-- discovery: boolean value, not supported but in the future allows the gateway to discover the plant and detect most of devices
+- setclock: set to true if you want your homebridge server to set the time of your gateway every hour
 - devices: list of installed devices
 
 The devices section contains the list of devices that will be managed. All devices contains three standard properties:
@@ -159,8 +107,7 @@ The devices section contains the list of devices that will be managed. All devic
 
 ## Supported devices
 
-* MHRelay: Standard (Lighting) Relay (eg. F411), address is B/A/PL (eg. 0/1/10)
-  * this device supports the definition of a custom frame for on and off command, so you can specify frame\_on and/or frame\_off:
+* MHRelay: Standard (Lighting) Relay (eg. F411), address is B/A/PL (eg. 0/1/10). This device supports the definition of a custom frame for on and off command, so you can specify frame\_on and/or frame\_off:
 
             {
             "accessory": "MHRelay",
@@ -180,12 +127,17 @@ The devices section contains the list of devices that will be managed. All devic
 * MHBlind: Standard Automation Relay (eg. F411, I need to check the F401), address is B/A/PL (eg. 0/1/10)
   * this device defines another property called "time" that defines the configured "stop time" in seconds; using this property the driver can evaluate the current position of the blind
 * MHBlindAdvanced: Advanced version of standard Blind (eg. F401 that manages internally the current position), address is B/A/PL (eg. 0/1/10)
-* MHContactSensor: Dry Contact sensor (eg. 3477 or some burgalarm sensors), address range is 1-201
-* MHPowerMeter: (WILL BE SUPPORTED)
-* MHAlarm: (WILL BE SUPPORTED)
+* MHContactSensor: Dry Contact sensor (eg. 3477 or some burgalarm sensors), address range is 1-201. Supported types are "motion", "contact"
+* MHPowerMeter: Only supported with F421 Load Control Central, use "refresh" to set the update interval
+* MHAlarm: tested on central 3486. Zones for Away, Night and At Home activation are currently hard coded in plugin code. Alarm activation/deactivation from Homekit is not implemented for security reasons, so monitor of the current status is supported
+* MHTimedRelay: to issue temporized command to relays. Default duration set in "duration"
+* MHControlledLoad: to control status of old generation Load Control outlets
+* MHAux: to deliver AUX events to Homekit. Supported type are "leak", "gas" and contact".
+
+See sample-config.json for the additional parameters of each accessory.
 
 ## Tested devices
-- F454v1 and MH201 as IP Gateway
+- F454v1, MH200N and MH201 as IP Gateway
 - F411/2 as MHRelay, MHOutlet and MHCurtain
 - F401 as MHBlindAdvanced
 - F416U1 as MHDimmer
@@ -196,13 +148,6 @@ The devices section contains the list of devices that will be managed. All devic
 
 - Groups are not managed
 
-# TODOS
-
-- Reconnection and infinite retry
-- Semi-auto discovery and/or read a plant configuration from MyHomeSuite configuration file
-- Re-order the code
-- IP Gateway discovery
-- Group and General Command support
 
 # Disclaimer
 

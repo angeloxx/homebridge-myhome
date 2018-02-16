@@ -1,0 +1,75 @@
+{
+    "platforms": [{
+        "platform": "LegrandMyHome",
+        "ipaddress": "192.168.1.2",
+        "port": 20000,
+        "ownpassword": "12345",
+        "discovery": false,
+        "setclock": true,
+        "devices": [{
+            "accessory": "MHRelay",
+            "name": "Sample light",
+            "address": "0/1/2"
+            },{
+            "accessory": "MHDimmer",
+            "name": "Sample dimmer",
+            "address": "0/1/1"
+            },{
+            "accessory": "MHBlind",
+            "name": "Sample blind",
+            "address": "0/3/1",
+            "time": 28
+            },{
+            "accessory": "MHBlindAdvanced",
+            "name": "Sample Advanced Curtain",
+            "address": "0/3/2"
+            },{
+            "accessory": "MHOutlet",
+            "name": "Sample outlet",
+            "address": "0/2/1",
+            "pul":true
+            },{
+            "accessory": "MHTimedRelay",
+            "name": "Sample timed relay",
+            "address": "0/4/1",
+            "pul":true,
+            "timer":300
+            },{
+            "accessory": "MHPowerMeter",
+            "name": "Sample powermeter",
+            "refresh": 10
+            },{
+            "accessory": "MHAlarm",
+            "name": "Sample alarm"
+            },{
+            "accessory": "MHDryContact",
+            "name": "Sample contact",
+            "address": "10",
+            "type": "Contact"
+            },{
+            "accessory": "MHAux",
+            "name": "Sample aux",
+            "address": "3",
+            "type": "Leak"
+             },{
+            "accessory": "MHControlledLoad",
+            "name": "Sample controlled load",
+            "address": "4"
+            },{
+            "accessory": "MHThermostat",
+            "name": "Sample Thermostat",
+            "address": "21"
+            },{
+            "accessory": "MHExternalThermometer",
+            "name": "Sample Thermo Sensor",
+            "address": "5"
+            }]
+        }],
+    "bridge": {
+        "username": "11:22:33:44:55:66", 
+        "name": "MyHome HomeBridge Adapter", 
+        "pin": "123-45-678", 
+        "port": 51827
+    }, 
+    "description": "My MyHome Home System"
+}
