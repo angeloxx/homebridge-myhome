@@ -4,7 +4,6 @@
         "ipaddress": "192.168.1.2",
         "port": 20000,
         "ownpassword": "12345",
-        "discovery": false,
         "setclock": true,
         "devices": [{
             "accessory": "MHRelay",
