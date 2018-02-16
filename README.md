@@ -14,7 +14,7 @@ authentication from the IP of the device that runs homebridge (ie. Raspberry) or
 HMAC authentication is supported by all recent IP gateways or older one with updated firmware (eg. F454 with v2 firmware).
 
 # Installation
-Install plugin with npm install -g simont77/homebridge-myhome
+Install plugin with `npm install -g simont77/homebridge-myhome`
 Add platform within config.json of you homebridge instance:
 
     {
@@ -38,8 +38,7 @@ Add platform within config.json of you homebridge instance:
         "accessories": []
     }
 
-Restart homebridge
-Enjoy!
+Restart homebridge.
 
 Sample log is:
 
@@ -93,7 +92,7 @@ The first part of the config file contains details about the MyHome Gateway used
             "devices": [{
 
 You need to change:
-- ipaddress: put the IP address or name of the MyHome Gateway (eg. F454 or MH201, I'm not so updated about all gateways that BTicino-Legrand releases after 2015); the IP should be static but in the future I can implement a UPNP dicovery because all gateways supports that method
+- ipaddress: put the IP address or name of the MyHome Gateway (eg. F454 or MH201)
 - port: should be 20000 and keep this value
 - ownpassword: the OpenWebNet password, default is 12345 but everyone will suggest to you to change it with another password (4 to 9 digits), but you will keep the default one, I know...
 - setclock: set to true if you want your homebridge server to set the time of your gateway every hour
@@ -127,9 +126,9 @@ The devices section contains the list of devices that will be managed. All devic
 * MHBlind: Standard Automation Relay (eg. F411, I need to check the F401), address is B/A/PL (eg. 0/1/10)
   * this device defines another property called "time" that defines the configured "stop time" in seconds; using this property the driver can evaluate the current position of the blind
 * MHBlindAdvanced: Advanced version of standard Blind (eg. F401 that manages internally the current position), address is B/A/PL (eg. 0/1/10)
-* MHContactSensor: Dry Contact sensor (eg. 3477 or some burgalarm sensors), address range is 1-201. Supported types are "motion", "contact"
+* MHContactSensor: Dry Contact sensor (eg. 3477 or some burgalarm sensors), address range is 1-201. Supported types are "motion" and "contact"
 * MHPowerMeter: Only supported with F421 Load Control Central, use "refresh" to set the update interval
-* MHAlarm: tested on central 3486. Zones for Away, Night and At Home activation are currently hard coded in plugin code. Alarm activation/deactivation from Homekit is not implemented for security reasons, so monitor of the current status is supported
+* MHAlarm: tested on central 3486. Zones for Away, Night and At Home activation are currently hard coded in plugin code. Alarm activation/deactivation from Homekit is not implemented for security reasons, so only monitor of the current status is supported
 * MHTimedRelay: to issue temporized command to relays. Default duration set in "duration"
 * MHControlledLoad: to control status of old generation Load Control outlets
 * MHAux: to deliver AUX events to Homekit. Supported type are "leak", "gas" and contact".
