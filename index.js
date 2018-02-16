@@ -1,7 +1,7 @@
 /*jshint esversion: 6,node: true,-W041: false */
 var path = require("path");	
 var mh = require(path.join(__dirname,'/lib/mhclient'));
-var sprintf = require("sprintf-js").sprintf, inherits = require("util").inherits, Promise = require('promise');
+var sprintf = require("sprintf-js").sprintf, inherits = require("util").inherits;
 var events = require('events'), util = require('util'), fs = require('fs');
 var Accessory, Characteristic, Service, UUIDGen;
 var moment = require('moment');
