@@ -1,5 +1,5 @@
 # MyHomePlugin
-Legrand (BTicino) MyHome plugin for homebridge: https://github.com/nfarina/homebridge
+Legrand (BTicino) MyHome plugin for homebridge: https://github.com/nfarina/homebridge This is a fork of https://github.com/angeloxx/homebridge-myhome, with added accessories and support for Elgato Eve history feature for contact, motion sensor and powermeter.
 
 Legrand MyHome (http://www.homesystems-legrandgroup.com/BtHomeSystems/home.action) is an Home Automation solution that can manage:
 - lighting (standard on/off/dimmed lights)
@@ -22,7 +22,6 @@ Add platform within config.json of you homebridge instance:
             "platform": "MyHome Gateway",
             "ipaddress": "192.168.1.1",
             "password": "12345",
-            "discovery": false,
             "setclock": true,
             "devices": [
                     /*Static list of devices*/
@@ -87,7 +86,6 @@ The first part of the config file contains details about the MyHome Gateway used
             "ipaddress": "192.168.157.207",
             "port": 20000,
             "ownpassword": "12345",
-            "discovery": false,
             "setclock": true,
             "devices": [{
 
@@ -126,12 +124,13 @@ The devices section contains the list of devices that will be managed. All devic
 * MHBlind: Standard Automation Relay (eg. F411, I need to check the F401), address is B/A/PL (eg. 0/1/10)
   * this device defines another property called "time" that defines the configured "stop time" in seconds; using this property the driver can evaluate the current position of the blind
 * MHBlindAdvanced: Advanced version of standard Blind (eg. F401 that manages internally the current position), address is B/A/PL (eg. 0/1/10)
-* MHContactSensor: Dry Contact sensor (eg. 3477 or some burgalarm sensors), address range is 1-201. Supported types are "motion" and "contact"
-* MHPowerMeter: Only supported with F421 Load Control Central, use "refresh" to set the update interval
+* MHContactSensor: Dry Contact sensor (eg. 3477 or some burgalarm sensors), address range is 1-201. Supported types are "motion" and "contact". Elgato Eve history feature is supported.
+* MHPowerMeter: Only supported with F421 Load Control Central, use "refresh" to set the update interval. Elgato Eve history feature is supported.
 * MHAlarm: tested on central 3486. Zones for Away, Night and At Home activation are currently hard coded in plugin code. Alarm activation/deactivation from Homekit is not implemented for security reasons, so only monitor of the current status is supported
 * MHTimedRelay: to issue temporized command to relays. Default duration set in "duration"
 * MHControlledLoad: to control status of old generation Load Control outlets
 * MHAux: to deliver AUX events to Homekit. Supported type are "leak", "gas" and contact".
+* MHIrrigation: modified MHTimedRelay using the new Homekit irrigation service
 
 See sample-config.json for the additional parameters of each accessory.
 
