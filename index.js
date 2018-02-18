@@ -178,11 +178,9 @@ class LegrandMyHome {
 			if (accessory.accessory == 'MHRain') this.devices.push(new MHRain(this.log,accessory));
 			if (accessory.accessory == 'MHDimmer') this.devices.push(new MHDimmer(this.log,accessory));
 			if (accessory.accessory == 'MHThermostat') this.devices.push(new MHThermostat(this.log,accessory));
-			if (accessory.accessory == 'MHExternalThermometer') this.devices.push(new MHThermometer(this.log,accessory));
-		
+			if (accessory.accessory == 'MHExternalThermometer') this.devices.push(new MHThermometer(this.log,accessory));	
 			if (accessory.accessory == 'MHDryContact') this.devices.push(new MHDryContact(this.log,accessory));
 			if (accessory.accessory == 'MHAux') this.devices.push(new MHAux(this.log,accessory));
-			
 			/* if (accessory.accessory == 'MHButton') this.devices.push(new MHButton(this.log,accessory)) */
 			if (accessory.accessory == 'MHPowerMeter') this.devices.push(new MHPowerMeter(this.log,accessory));
 			if (accessory.accessory == 'MHAlarm') this.devices.push(new MHAlarm(this.log,accessory));
@@ -291,9 +289,9 @@ class LegrandMyHome {
 				//if (accessory.adjustDuration)
 				//	accessory.timer = _value;
 				//accessory.IrrigationService.getCharacteristic(Characteristic.SetDuration).getValue(null);
-				if (accessory.power && accessory.timer !=0)
+				if (accessory.power)
 				{
-					accessory.RemDuration = accessory.timer;
+					accessory.RemDuration = _value;
 					accessory.timerHandle = setInterval(function() {
 					accessory.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,accessory.RemDuration);
 						accessory.RemDuration--;
@@ -850,8 +848,7 @@ class MHTimedRelay {
 				/* Custom frame support */
 				if (this.power && this.timer !=0)
 				{
-					var address = this.mh._slashesToAddress(this.address);
-					this.mh.send(sprintf("*#1*%s*#2*0*%d*0##",address,this.timer/60));
+					this.mh.relayTimedOn(this.address,this.timer/3600,this.timer/60,this.timer);
 				}
 				else
 				{
@@ -1747,7 +1744,6 @@ class MHIrrigation {
 		this.timerHandle = 0;
 		this.log.info(sprintf("LegrandMyHome::MHIrrigation create object: %s", this.address));
 		this.mh.addLightBusDevice(this.address);
-
 		var address = this.address.split("/"); 
         this.bus = parseInt(address[0]);
 		this.ambient = parseInt(address[1]);
@@ -1762,7 +1758,6 @@ class MHIrrigation {
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
-		
 		this.IrrigationService = new Service.Valve(this.name);
 		this.IrrigationService.setCharacteristic(Characteristic.ValveType,1);
 		this.IrrigationService.getCharacteristic(Characteristic.Active)
@@ -1771,8 +1766,7 @@ class MHIrrigation {
 				this.power = _value;
 				if (this.power)
 				{
-					var address = this.mh._slashesToAddress(this.address);
-					this.mh.send(sprintf("*#1*%s*#2*0*%d*%d##",address,this.timer/60, this.timer%60));	
+					this.mh.relayTimedOn(this.address,this.timer/3600,this.timer/60,this.timer);	
 				}
 				else
 				{
@@ -1784,24 +1778,15 @@ class MHIrrigation {
 			.on('get', (callback) => {
 				this.log.debug(sprintf("getIrrigation %s = %s",this.address, this.power));
 				callback(null, this.power);
-			/*})
-			.on('change',() => {
-				if(!this.power)
-				{
-					clearInterval(this.timerHandle);
-					this.RemDuration = this.timer;
-				this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
-				}*/		
 			});
 		this.IrrigationService.getCharacteristic(Characteristic.InUse)
 			.on('get', (callback) => {
 				callback(null, this.power);
 			})
 			.on('change',() => {
-				if (this.power) // && this.askDuration)
+				if (this.power)
 				{
-					var address = this.mh._slashesToAddress(this.address);
-					this.mh.send(sprintf("*#1*%s*2##",address));
+					this.mh.getRelayDuration(this.address);
 				}
 				else
 				{
@@ -1826,8 +1811,6 @@ class MHIrrigation {
 			.on('get', (callback) => {
 				callback(null, this.RemDuration);
 			});
-		
-		
 		return [service, this.IrrigationService];
 	}
 }
