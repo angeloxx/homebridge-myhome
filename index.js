@@ -1399,7 +1399,6 @@ class MHDryContact {
 					if (this.firstGet) {
 						this.firstGet = false;
 						this.LoggingService.addEntry({time: moment().unix(), status: this.state});
-						this.offset = this.LoggingService.getInitialTime();
 					}
 					callback(null, this.state);
 					});
@@ -1407,7 +1406,7 @@ class MHDryContact {
 					.on('change', () => {
 					this.log.debug(sprintf("changeContactSensorState %s = %s",this.address, this.state));
 					this.LoggingService.addEntry({time: moment().unix(), status: this.state});
-					this.lastOpening = moment().unix()-this.offset;
+					this.lastOpening = moment().unix()-this.LoggingService.getInitialTime();
 					if (this.state)
 						this.numberOpened++;
 					});
@@ -1449,7 +1448,6 @@ class MHDryContact {
 					if (this.firstGet) {
 						this.firstGet = false;
 						this.LoggingService.addEntry({time: moment().unix(), status: this.state});
-						this.offset = this.LoggingService.getInitialTime();
 					}
 					callback(null, this.state);
 				});
@@ -1457,7 +1455,7 @@ class MHDryContact {
 					.on('change', () => {
 					this.log.debug(sprintf("changeMotionSensorState %s = %s",this.address, this.state));
 					this.LoggingService.addEntry({time: moment().unix(), status: this.state});
-					this.lastOpening = moment().unix()-this.offset;
+					this.lastOpening = moment().unix()-this.LoggingService.getInitialTime();
 					});
 				this.dryContactService.getCharacteristic(LegrandMyHome.Duration)
 					.on('set', (value, callback) => {
