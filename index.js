@@ -1334,8 +1334,10 @@ class MHPowerMeter {
 				callback(null);
 			});
 		
-		//this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this,{storage: 'fs', path: this.config.parent.api.user.cachedAccessoryPath()});
-		this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this,{storage: 'googleDrive', path: 'homebridge'});
+		if (config.storage == 'fs')
+			this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this,{storage: 'fs'});
+		else
+			this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this,{storage: 'googleDrive', path: 'homebridge'});
 		
 		return [service, this.powerMeterService, this.powerLoggingService];
 	}	
@@ -1414,8 +1416,10 @@ class MHDryContact {
 		switch (this.type) {
 			case 'Contact':
 				this.dryContactService = new Service.ContactSensor(this.name);
-				//this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("door", this,{storage: 'fs', path: this.config.parent.api.user.cachedAccessoryPath()});
-				this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("door", this,{storage: 'googleDrive', path: 'homebridge'});
+				if (config.storage == 'fs')
+					this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("door", this,{storage: 'fs'});
+				else
+					this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("door", this,{storage: 'googleDrive', path: 'homebridge'});
 				this.dryContactService.addCharacteristic(LegrandMyHome.LastActivation);
 				this.dryContactService.addCharacteristic(LegrandMyHome.TimesOpened);
 				this.dryContactService.addCharacteristic(LegrandMyHome.ResetTotal);
@@ -1464,8 +1468,10 @@ class MHDryContact {
 				return [service, this.dryContactService];
 			case 'Motion':
 				this.dryContactService = new Service.MotionSensor(this.name);
-				//this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'fs', path: this.config.parent.api.user.cachedAccessoryPath()});
-				this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'googleDrive', path: 'homebridge'});
+				if (config.storage == 'fs')
+					this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'fs'});
+				else
+					this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'googleDrive', path: 'homebridge'});
 				this.dryContactService.addCharacteristic(LegrandMyHome.Sensitivity);
 				this.dryContactService.addCharacteristic(LegrandMyHome.Duration);
 				this.dryContactService.addCharacteristic(LegrandMyHome.LastActivation);	
@@ -1757,6 +1763,11 @@ class MHIrrigation {
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
 		this.IrrigationService = new Service.Valve(this.name);
+
+		// just to make the irrigation icon show in Eve, real history signature needed	
+		this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this, {size: 10, disableTimer: true});
+		
+
 		this.IrrigationService.setCharacteristic(Characteristic.ValveType,1);
 		this.IrrigationService.getCharacteristic(Characteristic.Active)
 			.on('set', (_value, callback) => {
@@ -1809,6 +1820,6 @@ class MHIrrigation {
 			.on('get', (callback) => {
 				callback(null, this.RemDuration);
 			});
-		return [service, this.IrrigationService];
+		return [service, this.IrrigationService, this.LoggingService];
 	}
 }
