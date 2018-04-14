@@ -235,7 +235,7 @@ class LegrandMyHome {
 				}
 				if (accessory.address == _address && accessory.IrrigationService !== undefined) {
 					accessory.power = _onoff;
-					accessory.askDuration = true;
+					//accessory.askDuration = true;
 					accessory.IrrigationService.getCharacteristic(Characteristic.Active).getValue(null);
 					accessory.IrrigationService.getCharacteristic(Characteristic.InUse).getValue(null);
 				}
@@ -286,18 +286,10 @@ class LegrandMyHome {
 	onRelayDuration(_address,_value) {
 		this.devices.forEach(function(accessory) {
 			if (accessory.address == _address && accessory.IrrigationService !== undefined) {
-				//if (accessory.adjustDuration)
-				//	accessory.timer = _value;
-				//accessory.IrrigationService.getCharacteristic(Characteristic.SetDuration).getValue(null);
 				if (accessory.power)
 				{
 					accessory.RemDuration = _value;
-					accessory.timerHandle = setInterval(function() {
 					accessory.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,accessory.RemDuration);
-						accessory.RemDuration--;
-						if (accessory.RemDuration == 0)
-							clearInterval(accessory.timerHandle);
-					}.bind(this),1000);
 				}
 					
 			}
@@ -1769,6 +1761,7 @@ class MHIrrigation {
 		
 
 		this.IrrigationService.setCharacteristic(Characteristic.ValveType,1);
+		this.IrrigationService.setCharacteristic(Characteristic.SetDuration,this.timer);
 		this.IrrigationService.getCharacteristic(Characteristic.Active)
 			.on('set', (_value, callback) => {
 				this.log.debug(sprintf("setIrrigation %s = %s",this.address, _value));
@@ -1799,9 +1792,8 @@ class MHIrrigation {
 				}
 				else
 				{
-					clearInterval(this.timerHandle);
-					this.RemDuration = this.timer;
-				this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
+					this.RemDuration = 0;
+					this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
 				}	
 			});	
 		this.IrrigationService.getCharacteristic(Characteristic.SetDuration)
