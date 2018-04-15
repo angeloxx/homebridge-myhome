@@ -1332,7 +1332,7 @@ class MHPowerMeter {
 				callback(null);
 			});
 		
-		if (config.storage == 'fs')
+		if (this.config.storage == 'fs')
 			this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this,{storage: 'fs'});
 		else
 			this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this,{storage: 'googleDrive', path: 'homebridge'});
@@ -1414,7 +1414,7 @@ class MHDryContact {
 		switch (this.type) {
 			case 'Contact':
 				this.dryContactService = new Service.ContactSensor(this.name);
-				if (config.storage == 'fs')
+				if (this.config.storage == 'fs')
 					this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("door", this,{storage: 'fs'});
 				else
 					this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("door", this,{storage: 'googleDrive', path: 'homebridge'});
@@ -1466,7 +1466,7 @@ class MHDryContact {
 				return [service, this.dryContactService];
 			case 'Motion':
 				this.dryContactService = new Service.MotionSensor(this.name);
-				if (config.storage == 'fs')
+				if (this.config.storage == 'fs')
 					this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'fs'});
 				else
 					this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'googleDrive', path: 'homebridge'});
