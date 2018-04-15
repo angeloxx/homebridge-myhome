@@ -289,8 +289,14 @@ class LegrandMyHome {
 				if (accessory.power)
 				{
 					accessory.RemDuration = _value;
+					accessory.timerHandle = setInterval(function() {
 					accessory.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,accessory.RemDuration);
+						accessory.RemDuration--;
+						if (accessory.RemDuration == 0)
+							clearInterval(accessory.timerHandle);
+					}.bind(this),1000);
 				}
+
 					
 			}
 		}.bind(this));
@@ -1792,6 +1798,7 @@ class MHIrrigation {
 				}
 				else
 				{
+					clearInterval(this.timerHandle);
 					this.RemDuration = 0;
 					this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
 				}	
