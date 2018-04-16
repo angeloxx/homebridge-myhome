@@ -1394,6 +1394,7 @@ class MHDryContact {
 		this.duration = config.duration || 30;
 		this.firstGet = true;
 		this.lastOpening = 0;
+		this.lastActivation = 0;
 		this.state = config.state || false;
 		this.log.info(sprintf("LegrandMyHome::MHDryContact create object: %s", this.address));
 	}
@@ -1423,6 +1424,13 @@ class MHDryContact {
 				this.dryContactService.addCharacteristic(LegrandMyHome.ResetTotal);
 				this.dryContactService.addCharacteristic(LegrandMyHome.Char118);
 				this.dryContactService.addCharacteristic(LegrandMyHome.Char119);
+				this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+				if (this.ExtraPersistedData != undefined) {
+					this.numberOpened = this.ExtraPersistedData.numberOpened || 0;
+					this.lastOpening = this.ExtraPersistedData.lastOpening || 0;
+					this.lastReset = this.ExtraPersistedData.lastReset || 0;
+				}
+
 				this.dryContactService.getCharacteristic(Characteristic.ContactSensorState)
 					.on('get', (callback) => {
 					this.log.debug(sprintf("getContactSensorState %s = %s",this.address, this.state));
@@ -1435,23 +1443,44 @@ class MHDryContact {
 				this.dryContactService.getCharacteristic(Characteristic.ContactSensorState)
 					.on('change', () => {
 					this.log.debug(sprintf("changeContactSensorState %s = %s",this.address, this.state));
-					this.LoggingService.addEntry({time: moment().unix(), status: this.state});
 					this.lastOpening = moment().unix()-this.LoggingService.getInitialTime();
-					if (this.state)
-						this.numberOpened++;
+					if (this.state) {
+						this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+						if (this.ExtraPersistedData != undefined && this.ExtraPersistedData.numberOpened != undefined)	
+							this.numberOpened = this.ExtraPersistedData.numberOpened  + 1;
+						else
+							this.numberOpened++;
+					}
+					this.LoggingService.setExtraPersistedData({numberOpened:this.numberOpened, lastOpening: this.lastOpening, lastReset:this.lastReset});
+					this.LoggingService.addEntry({time: moment().unix(), status: this.state});
 					});
 				this.dryContactService.getCharacteristic(LegrandMyHome.ResetTotal)
 					.on('set', (value, callback) => {
 						this.numberOpened = 0;
+						this.lastReset = value;
+						this.LoggingService.setExtraPersistedData({numberOpened:this.numberOpened, lastOpening: this.lastOpening, lastReset:this.lastReset});
+						this.LoggingService.addEntry({time: moment().unix(), status: this.state});
 						callback(null);
+					})
+					.on('get', (callback) => {
+						this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+						if (this.ExtraPersistedData != undefined ) 
+							this.lastReset = this.ExtraPersistedData.lastReset;
+						callback(null, this.lastReset);
 					});
 				this.dryContactService.getCharacteristic(LegrandMyHome.TimesOpened)
 					.on('get', (callback) => {
+						this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+						if (this.ExtraPersistedData != undefined ) 
+							this.numberOpened = this.ExtraPersistedData.numberOpened;
 						this.log.debug(sprintf("getNumberOpened = %f",this.numberOpened));
 						callback(null, this.numberOpened);
 					});
 				this.dryContactService.getCharacteristic(LegrandMyHome.LastActivation)
 					.on('get', (callback) => {
+						this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+						if (this.ExtraPersistedData != undefined ) 
+							this.lastOpening = this.ExtraPersistedData.lastOpening;
 						this.log.debug(sprintf("lastOpening = %f",this.lastOpening));
 						callback(null, this.lastOpening);
 					});
@@ -1473,7 +1502,11 @@ class MHDryContact {
 				this.dryContactService.addCharacteristic(LegrandMyHome.Sensitivity);
 				this.dryContactService.addCharacteristic(LegrandMyHome.Duration);
 				this.dryContactService.addCharacteristic(LegrandMyHome.LastActivation);	
-				this.dryContactService.setCharacteristic(LegrandMyHome.Duration,this.duration);			
+				this.dryContactService.setCharacteristic(LegrandMyHome.Duration,this.duration);
+				this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+				if (this.ExtraPersistedData != undefined) {
+					this.lastActivation = this.ExtraPersistedData.lastActivation || 0;
+				}		
 				this.dryContactService.getCharacteristic(Characteristic.MotionDetected)
 					.on('get', (callback) => {
 					this.log.debug(sprintf("getMotionSensorState %s = %s",this.address, this.state));
@@ -1486,8 +1519,10 @@ class MHDryContact {
 				this.dryContactService.getCharacteristic(Characteristic.MotionDetected)
 					.on('change', () => {
 					this.log.debug(sprintf("changeMotionSensorState %s = %s",this.address, this.state));
-					this.LoggingService.addEntry({time: moment().unix(), status: this.state});
 					this.lastOpening = moment().unix()-this.LoggingService.getInitialTime();
+					this.LoggingService.setExtraPersistedData({lastActivation: this.lastActivation});
+					this.LoggingService.addEntry({time: moment().unix(), status: this.state});
+					
 					});
 				this.dryContactService.getCharacteristic(LegrandMyHome.Duration)
 					.on('set', (value, callback) => {
@@ -1499,8 +1534,11 @@ class MHDryContact {
 					});
 				this.dryContactService.getCharacteristic(LegrandMyHome.LastActivation)
 					.on('get', (callback) => {
-						this.log.debug(sprintf("lastOpening = %f",this.lastOpening));
-						callback(null, this.lastOpening);
+						this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+						if (this.ExtraPersistedData != undefined ) 
+							this.lastActivation = this.ExtraPersistedData.lastActivation;
+						this.log.debug(sprintf("lastOpening = %f",this.lastActivation));
+						callback(null, this.lastActivation);
 					});
 				
 				return [service, this.dryContactService, this.LoggingService];
