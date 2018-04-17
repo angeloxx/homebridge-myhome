@@ -458,8 +458,7 @@ class LegrandMyHome {
 
 	}
 
-	onZoneActive(_zone, _state)
-	{
+	onZoneActive(_zone, _state) {
 		this.devices.forEach(function(accessory) {
 			if (accessory.alarmService !== undefined) {
 				accessory.zone[_zone]  = _state;
@@ -1273,30 +1272,19 @@ class MHPowerMeter {
 		this.UUID = UUIDGen.generate(sprintf("powermeter-%s",config.address));
 		this.log = log;
 		this.refresh = config.refresh || 15;
-
 		this.intPower = 0;
 		this.acquiredSamples = 0;
-		this.averagedSampleForHistory = 600/this.refresh;
-			
+		this.lastReset = 0;	
 		this.value = 0;
 		this.totalenergy = 0;
+		this.ExtraPersistedData = {};
 		this.log.info(sprintf("LegrandMyHome::MHPowerMeter create object"));
 		correctingInterval.setCorrectingInterval(function(){
 			this.totalenergy = this.totalenergy + this.value * this.refresh / 3600 / 1000;
-			//this.intPower = this.intPower + this.value;
-			/*if (this.acquiredSamples<this.averagedSampleForHistory-1)
-			{
-				this.acquiredSamples++;
-			}
-			else
-			{*/
-				this.powerLoggingService.addEntry({time: moment().unix(), power:this.value}); //power:(this.intPower)/(this.averagedSampleForHistory)});
-			//	this.acquiredSamples=0;
-			//	this.intPower=0;
-			//}
+			this.LoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.lastReset});
 			this.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption).getValue(null);
 			this.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption).getValue(null);
-			
+			this.powerLoggingService.addEntry({time: moment().unix(), power:this.value}); 
 			this.mh.getPower();
 		}.bind(this), this.refresh * 1000);
 	}
@@ -1323,15 +1311,26 @@ class MHPowerMeter {
 			});
 		this.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption)
 			.on('get', (callback) => {
+				this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+				if (this.ExtraPersistedData != undefined ) 
+					this.totalenergy = this.ExtraPersistedData.totalenergy;
 				this.log.debug(sprintf("getConsumptio = %f",this.totalenergy));
 				callback(null, this.totalenergy);
 			});
 		this.powerMeterService.getCharacteristic(LegrandMyHome.ResetTotal)
 			.on('set', (value, callback) => {
 				this.totalenergy = 0;
+				this.lastReset = value;
+				this.LoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.lastReset});
 				callback(null);
-			});
-		
+			})
+			.on('get', (callback) => {
+				this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+				if (this.ExtraPersistedData != undefined ) 
+					this.lastReset = this.ExtraPersistedData.lastReset;
+				callback(null, this.lastReset);
+			});	
+
 		if (this.config.storage == 'fs')
 			this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this,{storage: 'fs'});
 		else
@@ -1396,6 +1395,7 @@ class MHDryContact {
 		this.lastOpening = 0;
 		this.lastActivation = 0;
 		this.state = config.state || false;
+		this.ExtraPersistedData = {};
 		this.log.info(sprintf("LegrandMyHome::MHDryContact create object: %s", this.address));
 	}
 
