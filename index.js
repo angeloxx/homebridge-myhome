@@ -1519,7 +1519,7 @@ class MHDryContact {
 				this.dryContactService.getCharacteristic(Characteristic.MotionDetected)
 					.on('change', () => {
 					this.log.debug(sprintf("changeMotionSensorState %s = %s",this.address, this.state));
-					this.lastOpening = moment().unix()-this.LoggingService.getInitialTime();
+					this.lastActivation = moment().unix()-this.LoggingService.getInitialTime();
 					this.LoggingService.setExtraPersistedData({lastActivation: this.lastActivation});
 					this.LoggingService.addEntry({time: moment().unix(), status: this.state});
 					
@@ -1537,7 +1537,7 @@ class MHDryContact {
 						this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
 						if (this.ExtraPersistedData != undefined ) 
 							this.lastActivation = this.ExtraPersistedData.lastActivation;
-						this.log.debug(sprintf("lastOpening = %f",this.lastActivation));
+						this.log.debug(sprintf("lastActivation = %f",this.lastActivation));
 						callback(null, this.lastActivation);
 					});
 				
@@ -1788,6 +1788,9 @@ class MHIrrigation {
         this.bus = parseInt(address[0]);
 		this.ambient = parseInt(address[1]);
 		this.pl = parseInt(address[2]);
+		this.lastActivation = 0;
+		this.ExtraPersistedData = {};
+		this.firstGet = true;
 	}
 
 	getServices() {
@@ -1801,8 +1804,12 @@ class MHIrrigation {
 		this.IrrigationService = new Service.Valve(this.name);
 
 		// just to make the irrigation icon show in Eve, real history signature needed	
-		this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this, {size: 10, disableTimer: true});
-		
+		this.IrrigationService.addCharacteristic(LegrandMyHome.LastActivation);
+		this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'fs'});
+		this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+		if (this.ExtraPersistedData != undefined) {
+			this.lastActivation = this.ExtraPersistedData.lastActivation || 0;
+		}	
 
 		this.IrrigationService.setCharacteristic(Characteristic.ValveType,1);
 		this.IrrigationService.setCharacteristic(Characteristic.SetDuration,this.timer);
@@ -1818,7 +1825,7 @@ class MHIrrigation {
 				{
 					this.mh.relayCommand(this.address,this.power);
 				}
-				
+
 				callback(null);
 			})
 			.on('get', (callback) => {
@@ -1827,6 +1834,10 @@ class MHIrrigation {
 			});
 		this.IrrigationService.getCharacteristic(Characteristic.InUse)
 			.on('get', (callback) => {
+				if (this.firstGet) {
+					this.firstGet = false;
+					this.LoggingService.addEntry({time: moment().unix(), status: this.power});
+				}
 				callback(null, this.power);
 			})
 			.on('change',() => {
@@ -1839,7 +1850,11 @@ class MHIrrigation {
 					clearInterval(this.timerHandle);
 					this.RemDuration = 0;
 					this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration,this.RemDuration);
-				}	
+				}				
+				this.log.debug(sprintf("changeIrrigation %s = %s",this.address, this.power));
+				this.lastActivation = moment().unix()-this.LoggingService.getInitialTime();
+				this.LoggingService.setExtraPersistedData({lastActivation: this.lastActivation});
+				this.LoggingService.addEntry({time: moment().unix(), status: this.power});	
 			});	
 		this.IrrigationService.getCharacteristic(Characteristic.SetDuration)
 			.on('set', (time, callback) => {
@@ -1856,6 +1871,14 @@ class MHIrrigation {
 			})
 			.on('get', (callback) => {
 				callback(null, this.RemDuration);
+			});
+		this.IrrigationService.getCharacteristic(LegrandMyHome.LastActivation)
+			.on('get', (callback) => {
+				this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+				if (this.ExtraPersistedData != undefined ) 
+					this.lastActivation = this.ExtraPersistedData.lastActivation;
+				this.log.debug(sprintf("lastActivation = %f",this.lastActivation));
+				callback(null, this.lastActivation);
 			});
 		return [service, this.IrrigationService, this.LoggingService];
 	}
