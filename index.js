@@ -1281,7 +1281,7 @@ class MHPowerMeter {
 		this.log.info(sprintf("LegrandMyHome::MHPowerMeter create object"));
 		correctingInterval.setCorrectingInterval(function(){
 			this.totalenergy = this.totalenergy + this.value * this.refresh / 3600 / 1000;
-			this.LoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.lastReset});
+			this.powerLoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.lastReset});
 			this.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption).getValue(null);
 			this.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption).getValue(null);
 			this.powerLoggingService.addEntry({time: moment().unix(), power:this.value}); 
@@ -1311,7 +1311,7 @@ class MHPowerMeter {
 			});
 		this.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption)
 			.on('get', (callback) => {
-				this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+				this.ExtraPersistedData = this.powerLoggingService.getExtraPersistedData();
 				if (this.ExtraPersistedData != undefined ) 
 					this.totalenergy = this.ExtraPersistedData.totalenergy;
 				this.log.debug(sprintf("getConsumptio = %f",this.totalenergy));
@@ -1321,11 +1321,11 @@ class MHPowerMeter {
 			.on('set', (value, callback) => {
 				this.totalenergy = 0;
 				this.lastReset = value;
-				this.LoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.lastReset});
+				this.powerLoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.lastReset});
 				callback(null);
 			})
 			.on('get', (callback) => {
-				this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+				this.ExtraPersistedData = this.powerLoggingService.getExtraPersistedData();
 				if (this.ExtraPersistedData != undefined ) 
 					this.lastReset = this.ExtraPersistedData.lastReset;
 				callback(null, this.lastReset);
