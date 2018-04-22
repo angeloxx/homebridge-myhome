@@ -1805,7 +1805,10 @@ class MHIrrigation {
 
 		// just to make the irrigation icon show in Eve, real history signature needed	
 		this.IrrigationService.addCharacteristic(LegrandMyHome.LastActivation);
-		this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'fs'});
+		if (this.config.storage == 'fs')
+			this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'fs'});
+		else
+			this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this,{storage: 'googleDrive', path: 'homebridge'});
 		this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
 		if (this.ExtraPersistedData != undefined) {
 			this.lastActivation = this.ExtraPersistedData.lastActivation || 0;
