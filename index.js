@@ -845,7 +845,7 @@ class MHTimedRelay {
 				/* Custom frame support */
 				if (this.power && this.timer !=0)
 				{
-					this.mh.relayTimedOn(this.address,this.timer/3600,this.timer/60,this.timer);
+					this.mh.relayTimedOn(this.address,this.timer/3600,this.timer/60,this.timer%60);
 				}
 				else
 				{
@@ -1822,7 +1822,7 @@ class MHIrrigation {
 				this.power = _value;
 				if (this.power)
 				{
-					this.mh.relayTimedOn(this.address,this.timer/3600,this.timer/60,this.timer);	
+					this.mh.relayTimedOn(this.address,this.timer/3600,this.timer/60,this.timer%60);	
 				}
 				else
 				{
