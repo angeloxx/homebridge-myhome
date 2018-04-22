@@ -1846,7 +1846,8 @@ class MHIrrigation {
 			.on('change',() => {
 				if (this.power)
 				{
-					this.mh.getRelayDuration(this.address);
+					setTimeout(function () {
+						this.mh.getRelayDuration(this.address)}.bind(this),1000);
 				}
 				else
 				{
