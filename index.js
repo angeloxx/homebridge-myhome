@@ -1277,11 +1277,20 @@ class MHPowerMeter {
 		this.lastReset = 0;	
 		this.value = 0;
 		this.totalenergy = 0;
+		this.totalenergytemp = 0;
 		this.ExtraPersistedData = {};
 		this.log.info(sprintf("LegrandMyHome::MHPowerMeter create object"));
 		correctingInterval.setCorrectingInterval(function(){
-			this.totalenergy = this.totalenergy + this.value * this.refresh / 3600 / 1000;
-			this.powerLoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.lastReset});
+			this.ExtraPersistedData = this.powerLoggingService.getExtraPersistedData();
+			if (this.ExtraPersistedData != undefined ) {
+				this.totalenergy = this.ExtraPersistedData.totalenergy + this.totalenergytemp + this.value * this.refresh / 3600 / 1000;
+				this.powerLoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.lastReset});
+				this.totalenergytemp = 0;
+			}
+			else {
+				this.totalenergytemp = this.totalenergytemp + this.value * this.refresh / 3600 / 1000;
+				this.totalenergy = this.totalenergytemp;
+			}
 			this.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption).getValue(null);
 			this.powerMeterService.getCharacteristic(LegrandMyHome.TotalConsumption).getValue(null);
 			this.powerLoggingService.addEntry({time: moment().unix(), power:this.value}); 
