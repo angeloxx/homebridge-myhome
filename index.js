@@ -1281,11 +1281,16 @@ class MHPowerMeter {
 		this.ExtraPersistedData = {};
 		this.log.info(sprintf("LegrandMyHome::MHPowerMeter create object"));
 		correctingInterval.setCorrectingInterval(function(){
-			this.ExtraPersistedData = this.powerLoggingService.getExtraPersistedData();
-			if (this.ExtraPersistedData != undefined ) {
-				this.totalenergy = this.ExtraPersistedData.totalenergy + this.totalenergytemp + this.value * this.refresh / 3600 / 1000;
-				this.powerLoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.lastReset});
+			if (this.powerLoggingService.loaded) {
+				this.ExtraPersistedData = this.powerLoggingService.getExtraPersistedData();
+				if (this.ExtraPersistedData != undefined ) {
+					this.totalenergy = this.ExtraPersistedData.totalenergy + this.totalenergytemp + this.value * this.refresh / 3600 / 1000;
+				}
+				else {
+					this.totalenergy = this.totalenergytemp + this.value * this.refresh / 3600 / 1000;
+				}
 				this.totalenergytemp = 0;
+				this.powerLoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.lastReset});
 			}
 			else {
 				this.totalenergytemp = this.totalenergytemp + this.value * this.refresh / 3600 / 1000;
@@ -1856,7 +1861,8 @@ class MHIrrigation {
 				if (this.power)
 				{
 					setTimeout(function () {
-						this.mh.getRelayDuration(this.address)}.bind(this),1000);
+						this.mh.getRelayDuration(this.address);
+					}.bind(this),1000);
 				}
 				else
 				{
