@@ -1281,16 +1281,18 @@ class MHPowerMeter {
 		this.ExtraPersistedData = {};
 		this.log.info(sprintf("LegrandMyHome::MHPowerMeter create object"));
 		correctingInterval.setCorrectingInterval(function(){
-			if (this.powerLoggingService.loaded) {
+			if (this.powerLoggingService.isHistoryLoaded()) {
 				this.ExtraPersistedData = this.powerLoggingService.getExtraPersistedData();
 				if (this.ExtraPersistedData != undefined ) {
 					this.totalenergy = this.ExtraPersistedData.totalenergy + this.totalenergytemp + this.value * this.refresh / 3600 / 1000;
+					this.powerLoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.ExtraPersistedData.lastReset});
 				}
 				else {
 					this.totalenergy = this.totalenergytemp + this.value * this.refresh / 3600 / 1000;
+					this.powerLoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:0});
 				}
 				this.totalenergytemp = 0;
-				this.powerLoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.lastReset});
+				
 			}
 			else {
 				this.totalenergytemp = this.totalenergytemp + this.value * this.refresh / 3600 / 1000;
@@ -1335,7 +1337,7 @@ class MHPowerMeter {
 			.on('set', (value, callback) => {
 				this.totalenergy = 0;
 				this.lastReset = value;
-				this.powerLoggingService.setExtraPersistedData({totalenergy:this.totalenergy, lastReset:this.lastReset});
+				this.powerLoggingService.setExtraPersistedData({totalenergy:this.totalenergy,lastReset:this.lastReset});
 				callback(null);
 			})
 			.on('get', (callback) => {
