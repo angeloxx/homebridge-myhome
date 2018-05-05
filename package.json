@@ -1,6 +1,6 @@
 {
   "name": "homebridge-myhome-tng",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Legrand MyHome plugin for homebridge: https://github.com/nfarina/homebridge",
   "license": "MIT",
   "keywords": [
