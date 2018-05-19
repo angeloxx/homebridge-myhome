@@ -181,7 +181,7 @@ class LegrandMyHome {
 			if (accessory.accessory == 'MHExternalThermometer') this.devices.push(new MHThermometer(this.log,accessory));	
 			if (accessory.accessory == 'MHDryContact') this.devices.push(new MHDryContact(this.log,accessory));
 			if (accessory.accessory == 'MHAux') this.devices.push(new MHAux(this.log,accessory));
-			/* if (accessory.accessory == 'MHButton') this.devices.push(new MHButton(this.log,accessory)) */
+			if (accessory.accessory == 'MHScenario') this.devices.push(new MHScenario(this.log,accessory)) 
 			if (accessory.accessory == 'MHPowerMeter') this.devices.push(new MHPowerMeter(this.log,accessory));
 			if (accessory.accessory == 'MHAlarm') this.devices.push(new MHAlarm(this.log,accessory));
 			if (accessory.accessory == 'MHControlledLoad') this.devices.push(new MHControlledLoad(this.log,accessory));
@@ -198,9 +198,12 @@ class LegrandMyHome {
 
 	onConnect() {
 		this.devices.forEach(function (accessory) {
-			if (accessory.thermostatService !== undefined) this.controller.getThermostatStatus(accessory.address);
-			if (accessory.contactSensorService !== undefined || accessory.dryContactService !== undefined) this.controller.getContactState(accessory.address);
-			if (accessory.windowCoveringPlusService !== undefined) this.controller.getAdvancedBlindState(accessory.address);
+			if (accessory.thermostatService !== undefined)
+				this.controller.getThermostatStatus(accessory.address);
+			if (accessory.contactSensorService !== undefined || accessory.dryContactService !== undefined)
+				this.controller.getContactState(accessory.address);
+			if (accessory.windowCoveringPlusService !== undefined)
+				this.controller.getAdvancedBlindState(accessory.address);
 			if (accessory.lightBulbService !== undefined && accessory.pul == true)
 				this.controller.getRelayState(accessory.address);
 			if (accessory.rainService !== undefined && accessory.pul == true)
@@ -209,6 +212,8 @@ class LegrandMyHome {
 				this.controller.getRelayState(accessory.address);
 			if (accessory.alarmService !== undefined)
 				this.controller.getAlarmState();
+			if (accessory.scenarioService !== undefined)
+				this.controller.getScenarioState(accessory.address);
 		}.bind(this));
 	}
 
@@ -235,7 +240,6 @@ class LegrandMyHome {
 				}
 				if (accessory.address == _address && accessory.IrrigationService !== undefined) {
 					accessory.power = _onoff;
-					//accessory.askDuration = true;
 					accessory.IrrigationService.getCharacteristic(Characteristic.Active).getValue(null);
 					accessory.IrrigationService.getCharacteristic(Characteristic.InUse).getValue(null);
 				}
@@ -283,6 +287,16 @@ class LegrandMyHome {
 			}
 		}.bind(this));
 	}
+
+	onScenario(_address,_state) {
+		this.devices.forEach(function(accessory) {
+			if (accessory.scenarioService !== undefined && accessory.address == _address) {
+				accessory.state = _state;
+				accessory.scenarioService.getCharacteristic(Characteristic.On).getValue(null);
+			}
+		}.bind(this));
+	}
+
 	onRelayDuration(_address,_value) {
 		this.devices.forEach(function(accessory) {
 			if (accessory.address == _address && accessory.IrrigationService !== undefined) {
@@ -1393,6 +1407,45 @@ class MHButton {
 	
 }
 
+class MHScenario {
+	constructor(log, config) {
+		this.config = config || {};
+		this.mh = config.parent.controller;
+		this.name = config.name;
+		this.address = config.address;
+		this.displayName = config.name;
+		this.UUID = UUIDGen.generate(sprintf("scenario-%s",config.address));
+		this.log = log;
+		
+		this.state = 0;
+		this.log.info(sprintf("LegrandMyHome::MHScenario create object: %s", this.address));
+	}
+
+	getServices() {
+		var service = new Service.AccessoryInformation();
+		service.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
+			.setCharacteristic(Characteristic.Model, "Scenario")
+			.setCharacteristic(Characteristic.FirmwareRevision, version)
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+
+		this.scenarioService = new Service.Switch(this.name);
+		this.scenarioService.getCharacteristic(Characteristic.On)
+			.on('set', (value,callback) => {
+				this.state = value;
+				this.mh.enableScenarioCommand(this.address,this.state);
+				this.log.debug(sprintf("setOn %s = %s",this.address, this.state));
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getOn %s",this.address));
+				callback(null,this.state);
+			});
+		return [service, this.scenarioService];
+	}	
+	
+}
+
 
 class MHDryContact {
 	constructor(log, config) {
@@ -1901,6 +1954,7 @@ class MHIrrigation {
 				this.log.debug(sprintf("lastActivation = %f",this.lastActivation));
 				callback(null, this.lastActivation);
 			});
+		
 		return [service, this.IrrigationService, this.LoggingService];
 	}
 }
