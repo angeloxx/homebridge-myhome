@@ -129,6 +129,17 @@ module.exports = function (homebridge) {
 	LegrandMyHome.Char119.UUID = 'E863F119-079E-48FF-8F27-9C2605A29F52';
 	inherits(LegrandMyHome.Char119, Characteristic);
 
+	LegrandMyHome.SimpleBoolean = function () {
+		Characteristic.call(this, 'Esegui', '6C716596-A86D-4810-86A7-6F258DE448C3');
+		this.setProps({
+			format: Characteristic.Formats.BOOL,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
+		});
+		this.value = this.getDefaultValue();
+	};
+	LegrandMyHome.TimesOpened.UUID = '6C716596-A86D-4810-86A7-6F258DE448C3';
+	inherits(LegrandMyHome.SimpleBoolean, Characteristic);
+
 	LegrandMyHome.PowerMeterService = function (displayName, subtype) {
 		Service.call(this, displayName, '00000001-0000-1777-8000-775D67EC4377', subtype);
 		this.addCharacteristic(LegrandMyHome.CurrentPowerConsumption);
@@ -146,6 +157,13 @@ module.exports = function (homebridge) {
 		this.addCharacteristic(Characteristic.Active);
 	};
 	inherits(LegrandMyHome.ControlledLoadService, Service);
+
+	LegrandMyHome.ScenarioService = function (displayName, subtype) {
+		Service.call(this, displayName, '524C7C75-1D86-44BA-A923-554BDA240EE5', subtype);
+		this.addCharacteristic(Characteristic.Active);
+		this.addCharacteristic(LegrandMyHome.SimpleBoolean);
+	};
+	inherits(LegrandMyHome.ScenarioService, Service);
 
 	LegrandMyHome.RainSensorService = function (displayName, subtype) {
 		Service.call(this, displayName, '9018CDC8-DEF9-49D5-A969-63F8CCAAB1A6', subtype);
@@ -288,11 +306,20 @@ class LegrandMyHome {
 		}.bind(this));
 	}
 
-	onScenario(_address, _state) {
+	onScenarioEnable(_address, _state) {
 		this.devices.forEach(function (accessory) {
 			if (accessory.scenarioService !== undefined && accessory.address == _address) {
 				accessory.state = _state;
-				accessory.scenarioService.getCharacteristic(Characteristic.On).getValue(null);
+				accessory.scenarioService.getCharacteristic(Characteristic.Active).getValue(null);
+			}
+		}.bind(this));
+	}
+
+	onScenarioRun(_address, _state) {
+		this.devices.forEach(function (accessory) {
+			if (accessory.scenarioService !== undefined && accessory.address == _address) {
+				accessory.running = _state;
+				accessory.scenarioService.getCharacteristic(LegrandMyHome.SimpleBoolean).getValue(null);
 			}
 		}.bind(this));
 	}
@@ -1404,6 +1431,7 @@ class MHScenario {
 		this.log = log;
 
 		this.state = 0;
+		this.running = 0;
 		this.log.info(sprintf("LegrandMyHome::MHScenario create object: %s", this.address));
 	}
 
@@ -1415,8 +1443,8 @@ class MHScenario {
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
 
-		this.scenarioService = new Service.Switch(this.name);
-		this.scenarioService.getCharacteristic(Characteristic.On)
+		this.scenarioService = new LegrandMyHome.ScenarioService(this.name);
+		this.scenarioService.getCharacteristic(Characteristic.Active)
 			.on('set', (value, callback) => {
 				this.state = value;
 				this.mh.enableScenarioCommand(this.address, this.state);
@@ -1426,6 +1454,17 @@ class MHScenario {
 			.on('get', (callback) => {
 				this.log.debug(sprintf("getOn %s", this.address));
 				callback(null, this.state);
+			});
+		this.scenarioService.getCharacteristic(LegrandMyHome.SimpleBoolean)
+			.on('set', (value, callback) => {
+				this.running = value;
+				this.mh.runScenarioCommand(this.address, this.running);
+				this.log.debug(sprintf("runOn %s = %s", this.address, this.state));
+				callback(null);
+			})
+			.on('get', (callback) => {
+				this.log.debug(sprintf("getOn %s", this.address));
+				callback(null, this.running);
 			});
 		return [service, this.scenarioService];
 	}
