@@ -7,6 +7,9 @@ var Accessory, Characteristic, Service, UUIDGen;
 var moment = require('moment');
 var correctingInterval = require('correcting-interval');
 const version = require('./package.json').version;
+var hexToBase64 = function (val) {
+	return new Buffer(('' + val).replace(/[^0-9A-F]/ig, ''), 'hex').toString('base64');
+};
 
 module.exports = function (homebridge) {
 	Service = homebridge.hap.Service;
@@ -128,6 +131,28 @@ module.exports = function (homebridge) {
 	};
 	LegrandMyHome.Char119.UUID = 'E863F119-079E-48FF-8F27-9C2605A29F52';
 	inherits(LegrandMyHome.Char119, Characteristic);
+
+	LegrandMyHome.Char131 = function () {
+		Characteristic.call(this, 'Char131', 'E863F131-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.DATA,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
+		});
+		this.value = this.getDefaultValue();
+	};
+	LegrandMyHome.Char131.UUID = 'E863F131-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.Char131, Characteristic);
+
+	LegrandMyHome.Char11D = function () {
+		Characteristic.call(this, 'Char11D', 'E863F11D-079E-48FF-8F27-9C2605A29F52');
+		this.setProps({
+			format: Characteristic.Formats.DATA,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
+		});
+		this.value = this.getDefaultValue();
+	};
+	LegrandMyHome.Char11D.UUID = 'E863F11D-079E-48FF-8F27-9C2605A29F52';
+	inherits(LegrandMyHome.Char11D, Characteristic);
 
 	LegrandMyHome.SimpleBoolean = function () {
 		Characteristic.call(this, 'Esegui', '6C716596-A86D-4810-86A7-6F258DE448C3');
@@ -1895,17 +1920,24 @@ class MHIrrigation {
 
 		this.IrrigationService = new Service.Valve(this.name);
 
-		// just to make the irrigation icon show in Eve, real history signature needed	
+		
 		this.IrrigationService.addCharacteristic(LegrandMyHome.LastActivation);
 		if (this.config.storage == 'fs')
-			this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this, { storage: 'fs', disableTimer: true });
+			this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("aqua", this, { storage: 'fs', disableTimer: true });
 		else
-			this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("motion", this, { storage: 'googleDrive', path: 'homebridge', disableTimer: true });
+			this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("aqua", this, { storage: 'googleDrive', path: 'homebridge', disableTimer: true });
 		this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
 		if (this.ExtraPersistedData != undefined) {
 			this.lastActivation = this.ExtraPersistedData.lastActivation || 0;
 		}
-
+		this.IrrigationService.addCharacteristic(Characteristic.LockPhysicalControls);
+		this.IrrigationService.addCharacteristic(Characteristic.RemainingDuration);
+		this.IrrigationService.addCharacteristic(Characteristic.StatusFault);
+		this.IrrigationService.removeCharacteristic(Characteristic.ServiceLabelIndex);
+		this.IrrigationService.removeCharacteristic(Characteristic.IsConfigured);
+		this.LoggingService.addCharacteristic(LegrandMyHome.Char11D);
+		this.LoggingService.addCharacteristic(LegrandMyHome.Char131);
+		//this.LoggingService.setCharacteristic(LegrandMyHome.Char131,hexToBase64('0002230003021b04040c4156323248314130303036330602080007042a3000000b0200000501000204f82c00001401030f0400000000450505000000004609050000000e000042064411051c0005033c0000003a814b42a34d8c4047110594186d19071ad91ab40000003c00000048060500000000004a06050000000000d004 79010000 9b047c01 00002f0e e00f0100 00000000 00000000 2c01 2d06 0000000000001e02300c'));
 		this.IrrigationService.setCharacteristic(Characteristic.ValveType, 1);
 		this.IrrigationService.setCharacteristic(Characteristic.SetDuration, this.timer);
 		this.IrrigationService.getCharacteristic(Characteristic.Active)
@@ -1947,7 +1979,7 @@ class MHIrrigation {
 				this.log.debug(sprintf("changeIrrigation %s = %s", this.address, this.power));
 				this.lastActivation = moment().unix() - this.LoggingService.getInitialTime();
 				this.LoggingService.setExtraPersistedData({ lastActivation: this.lastActivation });
-				this.LoggingService.addEntry({ time: moment().unix(), status: this.power });
+				this.LoggingService.addEntry({ time: moment().unix(), status: this.power, waterAmount:1000 });
 			});
 		this.IrrigationService.getCharacteristic(Characteristic.SetDuration)
 			.on('set', (time, callback) => {
