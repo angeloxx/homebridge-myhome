@@ -1916,7 +1916,7 @@ class MHIrrigation {
 			.setCharacteristic(Characteristic.Manufacturer, "Simone Tisa")
 			.setCharacteristic(Characteristic.Model, "Irrigation")
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
-			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.address);
+			.setCharacteristic(Characteristic.SerialNumber, "Address " + this.bus + "-" + this.ambient + "-" + this.pl);
 
 		this.IrrigationService = new Service.Valve(this.name);
 
@@ -1930,11 +1930,11 @@ class MHIrrigation {
 		if (this.ExtraPersistedData != undefined) {
 			this.lastActivation = this.ExtraPersistedData.lastActivation || 0;
 		}
-		this.IrrigationService.addCharacteristic(Characteristic.LockPhysicalControls);
-		this.IrrigationService.addCharacteristic(Characteristic.RemainingDuration);
-		this.IrrigationService.addCharacteristic(Characteristic.StatusFault);
-		this.IrrigationService.removeCharacteristic(Characteristic.ServiceLabelIndex);
-		this.IrrigationService.removeCharacteristic(Characteristic.IsConfigured);
+		//this.IrrigationService.addCharacteristic(Characteristic.LockPhysicalControls);
+		//this.IrrigationService.addCharacteristic(Characteristic.RemainingDuration);
+		//this.IrrigationService.addCharacteristic(Characteristic.StatusFault);
+		//this.IrrigationService.removeCharacteristic(Characteristic.ServiceLabelIndex);
+		//this.IrrigationService.removeCharacteristic(Characteristic.IsConfigured);
 		this.LoggingService.addCharacteristic(LegrandMyHome.Char11D);
 		this.LoggingService.addCharacteristic(LegrandMyHome.Char131);
 		//this.LoggingService.setCharacteristic(LegrandMyHome.Char131,hexToBase64('0002230003021b04040c4156323248314130303036330602080007042a3000000b0200000501000204f82c00001401030f0400000000450505000000004609050000000e000042064411051c0005033c0000003a814b42a34d8c4047110594186d19071ad91ab40000003c00000048060500000000004a06050000000000d004 79010000 9b047c01 00002f0e e00f0100 00000000 00000000 2c01 2d06 0000000000001e02300c'));
