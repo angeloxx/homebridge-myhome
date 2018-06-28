@@ -7,8 +7,19 @@ var Accessory, Characteristic, Service, UUIDGen;
 var moment = require('moment');
 var correctingInterval = require('correcting-interval');
 const version = require('./package.json').version;
+const Format = require('util').format;
 var hexToBase64 = function (val) {
 	return new Buffer(('' + val).replace(/[^0-9A-F]/ig, ''), 'hex').toString('base64');
+};
+var numToHex = function (val, len) {
+	var s = Number(val >>> 0).toString(16);
+	if (s.length % 2 != 0) {
+		s = '0' + s;
+	}
+	if (len) {
+		return ('0000000000000' + s).slice(-1 * len);
+	}
+	return s;
 };
 
 module.exports = function (homebridge) {
@@ -1930,16 +1941,23 @@ class MHIrrigation {
 		if (this.ExtraPersistedData != undefined) {
 			this.lastActivation = this.ExtraPersistedData.lastActivation || 0;
 		}
-		//this.IrrigationService.addCharacteristic(Characteristic.LockPhysicalControls);
-		//this.IrrigationService.addCharacteristic(Characteristic.RemainingDuration);
-		//this.IrrigationService.addCharacteristic(Characteristic.StatusFault);
-		//this.IrrigationService.removeCharacteristic(Characteristic.ServiceLabelIndex);
-		//this.IrrigationService.removeCharacteristic(Characteristic.IsConfigured);
+		
 		this.LoggingService.addCharacteristic(LegrandMyHome.Char11D);
 		this.LoggingService.addCharacteristic(LegrandMyHome.Char131);
 		//this.LoggingService.setCharacteristic(LegrandMyHome.Char131,hexToBase64('0002230003021b04040c4156323248314130303036330602080007042a3000000b0200000501000204f82c00001401030f0400000000450505000000004609050000000e000042064411051c0005033c0000003a814b42a34d8c4047110594186d19071ad91ab40000003c00000048060500000000004a06050000000000d004 79010000 9b047c01 00002f0e e00f0100 00000000 00000000 2c01 2d06 0000000000001e02300c'));
 		this.IrrigationService.setCharacteristic(Characteristic.ValveType, 1);
 		this.IrrigationService.setCharacteristic(Characteristic.SetDuration, this.timer);
+		this.LoggingService.getCharacteristic(LegrandMyHome.Char131)
+			.on('get', (callback) => {
+				let data = Format("0002230003021b04040c4156323248314130303036330602080007042a3000000b0200000501000204f82c00001401030f0400000000450505000000004609050000000e000042064411051c0005033c0000003a814b42a34d8c4047110594186d19071ad91ab40000003c00000048060500000000004a06050000000000d004 79010000 9b047c01 00002f0e e00f0100 00000000 00000000 2c01 2d06 0000000000001e02300c",
+					numToHex(swap16(this.lastEventMinus),4),
+					numToHex(swap16(this.lastEventPlus),4),
+				
+				
+				
+				);
+				callback(null, hexToBase64(data));
+			});
 		this.IrrigationService.getCharacteristic(Characteristic.Active)
 			.on('set', (_value, callback) => {
 				this.log.debug(sprintf("setIrrigation %s = %s", this.address, _value));
