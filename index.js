@@ -21,6 +21,16 @@ var numToHex = function (val, len) {
 	}
 	return s;
 };
+var swap16 = function (val) {
+	return ((val & 0xFF) << 8)
+		| ((val >>> 8) & 0xFF);
+};
+var swap32 = function (val) {
+	return ((val & 0xFF) << 24)
+		| ((val & 0xFF00) << 8)
+		| ((val >>> 8) & 0xFF00)
+		| ((val >>> 24) & 0xFF);
+};
 
 module.exports = function (homebridge) {
 	Service = homebridge.hap.Service;
@@ -1919,6 +1929,11 @@ class MHIrrigation {
 		this.lastActivation = 0;
 		this.ExtraPersistedData = {};
 		this.firstGet = true;
+		this.data131 = "";
+		this.waterFlux = 1000;
+		this.totalWaterAmount = 0;
+		this.currentWaterAmount = 0;
+		this.timeOpening = 0;
 	}
 
 	getServices() {
@@ -1931,8 +1946,6 @@ class MHIrrigation {
 
 		this.IrrigationService = new Service.Valve(this.name);
 
-		
-		this.IrrigationService.addCharacteristic(LegrandMyHome.LastActivation);
 		if (this.config.storage == 'fs')
 			this.LoggingService = new LegrandMyHome.FakeGatoHistoryService("aqua", this, { storage: 'fs', disableTimer: true });
 		else
@@ -1940,23 +1953,44 @@ class MHIrrigation {
 		this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
 		if (this.ExtraPersistedData != undefined) {
 			this.lastActivation = this.ExtraPersistedData.lastActivation || 0;
+			this.waterFlux = this.ExtraPersistedData.waterFlux || 1000;
+			this.totalWaterAmount = this.ExtraPersistedData.totalWaterAmount || 0;
 		}
-		
+
 		this.LoggingService.addCharacteristic(LegrandMyHome.Char11D);
 		this.LoggingService.addCharacteristic(LegrandMyHome.Char131);
-		//this.LoggingService.setCharacteristic(LegrandMyHome.Char131,hexToBase64('0002230003021b04040c4156323248314130303036330602080007042a3000000b0200000501000204f82c00001401030f0400000000450505000000004609050000000e000042064411051c0005033c0000003a814b42a34d8c4047110594186d19071ad91ab40000003c00000048060500000000004a06050000000000d004 79010000 9b047c01 00002f0e e00f0100 00000000 00000000 2c01 2d06 0000000000001e02300c'));
 		this.IrrigationService.setCharacteristic(Characteristic.ValveType, 1);
 		this.IrrigationService.setCharacteristic(Characteristic.SetDuration, this.timer);
 		this.LoggingService.getCharacteristic(LegrandMyHome.Char131)
 			.on('get', (callback) => {
-				let data = Format("0002230003021b04040c4156323248314130303036330602080007042a3000000b0200000501000204f82c00001401030f0400000000450505000000004609050000000e000042064411051c0005033c0000003a814b42a34d8c4047110594186d19071ad91ab40000003c00000048060500000000004a06050000000000d004 79010000 9b047c01 00002f0e e00f0100 00000000 00000000 2c01 2d06 0000000000001e02300c",
-					numToHex(swap16(this.lastEventMinus),4),
-					numToHex(swap16(this.lastEventPlus),4),
-				
-				
-				
+				this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+				if (this.ExtraPersistedData != undefined) {
+					this.lastActivation = this.ExtraPersistedData.lastActivation || 0;
+					this.waterFlux = this.ExtraPersistedData.waterFlux || 1000;
+					this.totalWaterAmount = this.ExtraPersistedData.totalWaterAmount || 0;
+				}
+				this.data131 = Format("0002230003021b04040c4156323248314130303036330602080007042a3000000b0200000501000204f82c00001401030f0400000000450505000000004609050000000e000042064411051c0005033c0000003a814b42a34d8c4047110594186d19071ad91ab40000003c00000048060500000000004a06050000000000d004 %s 9b04 %s 2f0e %s 00000000 00000000 %s 2d06 0000000000001e02300c",
+					numToHex(swap32(this.lastActivation), 8),
+					numToHex(swap32(moment().unit() - this.LoggingService.getInitialTime()), 8),
+					numToHex(swap32(this.totalWaterAmount), 8).
+						numToHex(swap16(this.waterFlux), 4)
 				);
-				callback(null, hexToBase64(data));
+				this.log.debug("Data 131 %s: %s", this.accessoryName, this.data131);
+				callback(null, hexToBase64(this.data131));
+			});
+		this.LoggingService.getCharacteristic(LegrandMyHome.Char11D)
+			.on('set', (_value, callback) => {
+				var valHex = base64ToHex(_value);
+				this.log.debug("Data 11D %s: %s", this.accessoryName, valHex);
+				var substringCommand = valHex.substring(0, 4);
+				if (substringCommand == "2e02") {
+					var substringFlux = valHex.substring(4);
+					var valFluxInt = parseInt(substringFlux, 16);
+					this.waterFlux = swap16(valFluxInt);
+				}
+				this.LoggingService.setExtraPersistedData({ lastActivation: this.lastActivation, flux: this.waterFlux, totalWaterAmount: this.totalWaterAmount });
+				this.log.debug("New flux %s: %s", this.accessoryName, this.waterFlux);
+				callback(null);
 			});
 		this.IrrigationService.getCharacteristic(Characteristic.Active)
 			.on('set', (_value, callback) => {
@@ -1988,16 +2022,24 @@ class MHIrrigation {
 					setTimeout(function () {
 						this.mh.getRelayDuration(this.address);
 					}.bind(this), 1000);
+					this.timeOpening = moment().unix();
 				}
 				else {
 					clearInterval(this.timerHandle);
+					if (moment().unix() - this.timeOpening > 0) {
+						this.currentWaterAmount = (moment().unix() - this.timeOpening) * this.waterFlux / 60;
+						this.totalWaterAmount += this.currentWaterAmount;
+					}
+					else
+						this.currentWaterAmount = 0;
 					this.RemDuration = 0;
 					this.IrrigationService.setCharacteristic(Characteristic.RemainingDuration, this.RemDuration);
 				}
 				this.log.debug(sprintf("changeIrrigation %s = %s", this.address, this.power));
 				this.lastActivation = moment().unix() - this.LoggingService.getInitialTime();
-				this.LoggingService.setExtraPersistedData({ lastActivation: this.lastActivation });
-				this.LoggingService.addEntry({ time: moment().unix(), status: this.power, waterAmount:1000 });
+
+				this.LoggingService.setExtraPersistedData({ lastActivation: this.lastActivation, flux: this.waterFlux, totalWaterAmount: this.totalWaterAmount });
+				this.LoggingService.addEntry({ time: moment().unix(), status: this.power, waterAmount: this.currentWaterAmount });
 			});
 		this.IrrigationService.getCharacteristic(Characteristic.SetDuration)
 			.on('set', (time, callback) => {
@@ -2014,14 +2056,6 @@ class MHIrrigation {
 			})
 			.on('get', (callback) => {
 				callback(null, this.RemDuration);
-			});
-		this.IrrigationService.getCharacteristic(LegrandMyHome.LastActivation)
-			.on('get', (callback) => {
-				this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
-				if (this.ExtraPersistedData != undefined)
-					this.lastActivation = this.ExtraPersistedData.lastActivation;
-				this.log.debug(sprintf("lastActivation = %f", this.lastActivation));
-				callback(null, this.lastActivation);
 			});
 
 		return [service, this.IrrigationService, this.LoggingService];
