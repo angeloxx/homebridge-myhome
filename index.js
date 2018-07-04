@@ -1971,9 +1971,9 @@ class MHIrrigation {
 				}
 				this.data131 = Format("0002230003021b04040c4156323248314130303036330602080007042a3000000b0200000501000204f82c00001401030f0400000000450505000000004609050000000e000042064411051c0005033c0000003a814b42a34d8c4047110594186d19071ad91ab40000003c00000048060500000000004a06050000000000d004 %s 9b04 %s 2f0e %s 00000000 00000000 %s 2d06 0000000000001e02300c",
 					numToHex(swap32(this.lastActivation), 8),
-					numToHex(swap32(moment().unit() - this.LoggingService.getInitialTime()), 8),
-					numToHex(swap32(this.totalWaterAmount), 8).
-						numToHex(swap16(this.waterFlux), 4)
+					numToHex(swap32(moment().unix() - this.LoggingService.getInitialTime()), 8),
+					numToHex(swap32(this.totalWaterAmount), 8),
+					numToHex(swap16(this.waterFlux), 4)
 				);
 				this.log.debug("Data 131 %s: %s", this.accessoryName, this.data131);
 				callback(null, hexToBase64(this.data131));
