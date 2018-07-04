@@ -11,6 +11,11 @@ const Format = require('util').format;
 var hexToBase64 = function (val) {
 	return new Buffer(('' + val).replace(/[^0-9A-F]/ig, ''), 'hex').toString('base64');
 };
+var base64ToHex = function (val) {
+	if (!val)
+		return val;
+	return new Buffer(val, 'base64').toString('hex');
+};
 var numToHex = function (val, len) {
 	var s = Number(val >>> 0).toString(16);
 	if (s.length % 2 != 0) {
@@ -1975,21 +1980,22 @@ class MHIrrigation {
 					numToHex(swap32(this.totalWaterAmount), 8),
 					numToHex(swap16(this.waterFlux), 4)
 				);
-				this.log.debug("Data 131 %s: %s", this.accessoryName, this.data131);
+				this.log.debug("Data 131 %s: %s", this.name, this.data131);
 				callback(null, hexToBase64(this.data131));
 			});
 		this.LoggingService.getCharacteristic(LegrandMyHome.Char11D)
 			.on('set', (_value, callback) => {
 				var valHex = base64ToHex(_value);
-				this.log.debug("Data 11D %s: %s", this.accessoryName, valHex);
+				this.log.debug("Data 11D %s: %s", this.name, valHex);
 				var substringCommand = valHex.substring(0, 4);
 				if (substringCommand == "2e02") {
 					var substringFlux = valHex.substring(4);
 					var valFluxInt = parseInt(substringFlux, 16);
 					this.waterFlux = swap16(valFluxInt);
 				}
-				this.LoggingService.setExtraPersistedData({ lastActivation: this.lastActivation, flux: this.waterFlux, totalWaterAmount: this.totalWaterAmount });
-				this.log.debug("New flux %s: %s", this.accessoryName, this.waterFlux);
+				this.LoggingService.setExtraPersistedData({ lastActivation: this.lastActivation, waterFlux: this.waterFlux, totalWaterAmount: this.totalWaterAmount });
+				this.LoggingService.addEntry({ time: moment().unix(), status: this.power });
+				this.log.debug("New flux %s: %s", this.name, this.waterFlux);
 				callback(null);
 			});
 		this.IrrigationService.getCharacteristic(Characteristic.Active)
@@ -2027,7 +2033,7 @@ class MHIrrigation {
 				else {
 					clearInterval(this.timerHandle);
 					if (moment().unix() - this.timeOpening > 0) {
-						this.currentWaterAmount = (moment().unix() - this.timeOpening) * this.waterFlux / 60;
+						this.currentWaterAmount = (moment().unix() - this.timeOpening) * this.waterFlux;
 						this.totalWaterAmount += this.currentWaterAmount;
 					}
 					else
@@ -2038,7 +2044,7 @@ class MHIrrigation {
 				this.log.debug(sprintf("changeIrrigation %s = %s", this.address, this.power));
 				this.lastActivation = moment().unix() - this.LoggingService.getInitialTime();
 
-				this.LoggingService.setExtraPersistedData({ lastActivation: this.lastActivation, flux: this.waterFlux, totalWaterAmount: this.totalWaterAmount });
+				this.LoggingService.setExtraPersistedData({ lastActivation: this.lastActivation, waterFlux: this.waterFlux, totalWaterAmount: this.totalWaterAmount });
 				this.LoggingService.addEntry({ time: moment().unix(), status: this.power, waterAmount: this.currentWaterAmount });
 			});
 		this.IrrigationService.getCharacteristic(Characteristic.SetDuration)
