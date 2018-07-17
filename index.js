@@ -1588,9 +1588,18 @@ class MHDryContact {
 				this.dryContactService.getCharacteristic(Characteristic.ContactSensorState)
 					.on('change', () => {
 						this.log.debug(sprintf("changeContactSensorState %s = %s", this.address, this.state));
+						this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+						if (this.ExtraPersistedData != undefined && this.ExtraPersistedData.lastReset != undefined)
+						{
+							this.lastReset = this.ExtraPersistedData.lastReset || 0;
+						}
+						if (this.ExtraPersistedData != undefined && this.ExtraPersistedData.numberOpened != undefined)
+						{
+							this.numberOpened = this.ExtraPersistedData.numberOpened;
+						}
 						this.lastOpening = moment().unix() - this.LoggingService.getInitialTime();
 						if (this.state) {
-							this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+							
 							if (this.ExtraPersistedData != undefined && this.ExtraPersistedData.numberOpened != undefined)
 								this.numberOpened = this.ExtraPersistedData.numberOpened + 1;
 							else
@@ -1601,6 +1610,11 @@ class MHDryContact {
 					});
 				this.dryContactService.getCharacteristic(LegrandMyHome.ResetTotal)
 					.on('set', (value, callback) => {
+						this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+						if (this.ExtraPersistedData != undefined && this.ExtraPersistedData.lastOpening != undefined)
+						{
+							this.lastOpening = this.ExtraPersistedData.lastOpening;
+						}
 						this.numberOpened = 0;
 						this.lastReset = value;
 						this.LoggingService.setExtraPersistedData({ numberOpened: this.numberOpened, lastOpening: this.lastOpening, lastReset: this.lastReset });
@@ -1988,11 +2002,18 @@ class MHIrrigation {
 				var valHex = base64ToHex(_value);
 				this.log.debug("Data 11D %s: %s", this.name, valHex);
 				var substringCommand = valHex.substring(0, 4);
+				this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+				if (this.ExtraPersistedData != undefined) {
+					this.lastActivation = this.ExtraPersistedData.lastActivation || 0;
+					this.waterFlux = this.ExtraPersistedData.waterFlux || 1000;
+					this.totalWaterAmount = this.ExtraPersistedData.totalWaterAmount || 0;
+				}
 				if (substringCommand == "2e02") {
 					var substringFlux = valHex.substring(4);
 					var valFluxInt = parseInt(substringFlux, 16);
 					this.waterFlux = swap16(valFluxInt);
 				}
+
 				this.LoggingService.setExtraPersistedData({ lastActivation: this.lastActivation, waterFlux: this.waterFlux, totalWaterAmount: this.totalWaterAmount });
 				this.LoggingService.addEntry({ time: moment().unix(), status: this.power });
 				this.log.debug("New flux %s: %s", this.name, this.waterFlux);
@@ -2024,6 +2045,12 @@ class MHIrrigation {
 				callback(null, this.power);
 			})
 			.on('change', () => {
+				this.ExtraPersistedData = this.LoggingService.getExtraPersistedData();
+				if (this.ExtraPersistedData != undefined) {
+					this.lastActivation = this.ExtraPersistedData.lastActivation || 0;
+					this.waterFlux = this.ExtraPersistedData.waterFlux || 1000;
+					this.totalWaterAmount = this.ExtraPersistedData.totalWaterAmount || 0;
+				}
 				if (this.power) {
 					setTimeout(function () {
 						this.mh.getRelayDuration(this.address);
