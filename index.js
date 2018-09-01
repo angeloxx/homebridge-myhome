@@ -594,18 +594,27 @@ class LegrandMyHome {
 		this.devices.forEach(function (accessory) {
 			if (accessory.alarmBatteryService !== undefined) {
 				accessory.lowbattery = _state;
-				accessory.batterycharging = !_state;
 				if (_state == 0)
 					accessory.batterylevel = 100;
 				else
 					accessory.batterylevel = 0;
 				accessory.alarmBatteryService.getCharacteristic(Characteristic.StatusLowBattery).getValue(null);
 				accessory.alarmBatteryService.getCharacteristic(Characteristic.BatteryLevel).getValue(null);
-				accessory.alarmBatteryService.getCharacteristic(Characteristic.ChargingState).getValue(null);
 			}
 		}.bind(this));
 
 	}
+	
+	onAlarmNetwork(_state) {
+		this.devices.forEach(function (accessory) {
+			if (accessory.alarmBatteryService !== undefined) {
+				accessory.batterycharging = _state;
+			accessory.alarmBatteryService.getCharacteristic(Characteristic.ChargingState).getValue(null);
+			}
+		}.bind(this));
+
+	}
+	
 
 	onControlledLoad(_address, _value) {
 		this.devices.forEach(function (accessory) {
