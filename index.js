@@ -1406,6 +1406,8 @@ class MHPowerMeter {
 			.setCharacteristic(Characteristic.FirmwareRevision, version)
 			.setCharacteristic(Characteristic.SerialNumber, "Name-" + this.name);
 
+		this.outlet  = new Service.Outlet(this.name + " dumb switch");
+	
 		this.powerMeterService = new LegrandMyHome.PowerMeterService(this.name);
 		this.powerMeterService.getCharacteristic(LegrandMyHome.CurrentPowerConsumption)
 			.on('get', (callback) => {
@@ -1439,7 +1441,7 @@ class MHPowerMeter {
 		else
 			this.powerLoggingService = new LegrandMyHome.FakeGatoHistoryService("energy", this, { storage: 'googleDrive', path: 'homebridge' });
 
-		return [service, this.powerMeterService, this.powerLoggingService];
+		return [service, this.powerMeterService, this.powerLoggingService, this.outlet];
 	}
 }
 
