@@ -1094,16 +1094,10 @@ class MHBlind {
 				var travelTimeMs = this.evaluateTravelTimeMs(this.currentPosition, this.targetPosition);
 				if (value > this.currentPosition && this.state != Characteristic.PositionState.INCREASING) {
 					this.mh.simpleBlindCommand(this.address, 1);
-					//this.state = Characteristic.PositionState.INCREASING;
-					//this.evaluatePosition();
 				} else if (value < this.currentPosition && this.state != Characteristic.PositionState.DECREASING) {
 					this.mh.simpleBlindCommand(this.address, 2);
-					//this.state = Characteristic.PositionState.DECREASING;
-					//this.evaluatePosition();
 				} else {
 					this.mh.simpleBlindCommand(this.address, 0);
-					//this.state = Characteristic.PositionState.STOPPED;
-					//this.evaluatePosition();
 				}
 
 				/* Use the calculated travel time only if the target isn't the complete Up or Complete Down */
@@ -1112,8 +1106,6 @@ class MHBlind {
 						clearTimeout(this.timer);
 						this.timer = setTimeout(function () {
 							this.mh.simpleBlindCommand(this.address, 0);
-							//this.state = Characteristic.PositionState.STOPPED;
-							//this.evaluatePosition();
 							this.log.debug(sprintf("setTargetPosition %s at %s done", this.address, this.targetPosition));
 						}.bind(this), travelTimeMs);
 					}
