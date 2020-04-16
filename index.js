@@ -1027,6 +1027,7 @@ class MHBlind {
 		this.bus = parseInt(address[0]);
 		this.ambient = parseInt(address[1]);
 		this.pl = parseInt(address[2]);
+		this.timer = 0;
 	}
 
 	evaluatePosition() {
@@ -1038,7 +1039,8 @@ class MHBlind {
 			if (this.runningDirection != Characteristic.PositionState.STOPPED && this.state == Characteristic.PositionState.STOPPED) {
 				if (this.runningDirection == Characteristic.PositionState.INCREASING) {
 					this.currentPosition = Math.min(100, this.currentPosition + (100 / (this.time * 1000) * (((new Date()) - this.runningStartTime + this.startDelayMs) * (1 + this.timeAdjust / 100))));
-				} else {
+				}
+				if (this.runningDirection == Characteristic.PositionState.DECREASING) {
 					this.currentPosition = Math.max(0, this.currentPosition - (100 / (this.time * 1000) * (((new Date()) - this.runningStartTime + this.startDelayMs) * (1 + this.timeAdjust / 100))));
 				}
 				this.runningDirection = this.state;
@@ -1047,7 +1049,12 @@ class MHBlind {
 
 				this.log.debug(sprintf("Ending position is %d", this.currentPosition));
 			} else {
-				/* Uhm... */
+				if (this.runningDirection == Characteristic.PositionState.INCREASING) {
+					this.currentPosition = Math.min(100, this.currentPosition + (100 / (this.time * 1000) * (((new Date()) - this.runningStartTime + this.startDelayMs) * (1 + this.timeAdjust / 100))));
+				}
+				if (this.runningDirection == Characteristic.PositionState.DECREASING) {
+					this.currentPosition = Math.max(0, this.currentPosition - (100 / (this.time * 1000) * (((new Date()) - this.runningStartTime + this.startDelayMs) * (1 + this.timeAdjust / 100))));
+				}
 			}
 		}
 	}
@@ -1076,32 +1083,46 @@ class MHBlind {
 
 		this.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition)
 			.on('get', (callback) => {
-				this.log.debug(sprintf("getCurrentPosition %s = %s", this.address, this.state));
+				this.log.debug(sprintf("getCurrentPosition %s = %s", this.address, this.currentPosition));
 				callback(null, this.currentPosition);
 			});
 
 		this.windowCoveringService.getCharacteristic(Characteristic.TargetPosition)
 			.on('set', (value, callback) => {
 				this.targetPosition = value;
+				this.log.debug(sprintf("setTargetPosition %s = %s", this.address, this.targetPosition));
 				var travelTimeMs = this.evaluateTravelTimeMs(this.currentPosition, this.targetPosition);
-				if (value > this.currentPosition) {
+				if (value > this.currentPosition && this.state != Characteristic.PositionState.INCREASING) {
 					this.mh.simpleBlindCommand(this.address, 1);
-				} else {
+					//this.state = Characteristic.PositionState.INCREASING;
+					//this.evaluatePosition();
+				} else if (value < this.currentPosition && this.state != Characteristic.PositionState.DECREASING) {
 					this.mh.simpleBlindCommand(this.address, 2);
+					//this.state = Characteristic.PositionState.DECREASING;
+					//this.evaluatePosition();
+				} else {
+					this.mh.simpleBlindCommand(this.address, 0);
+					//this.state = Characteristic.PositionState.STOPPED;
+					//this.evaluatePosition();
 				}
 
 				/* Use the calculated travel time only if the target isn't the complete Up or Complete Down */
-				if (this.targetPosition > 0 && this.targetPosition < 100) {
+				if (this.targetPosition > 0 && this.targetPosition < 100 && this.currentPosition != this.targetPosition) {
 					if (travelTimeMs > 0) {
-						setTimeout(function () {
+						clearTimeout(this.timer);
+						this.timer = setTimeout(function () {
 							this.mh.simpleBlindCommand(this.address, 0);
+							//this.state = Characteristic.PositionState.STOPPED;
+							//this.evaluatePosition();
+							this.log.debug(sprintf("setTargetPosition %s at %s done", this.address, this.targetPosition));
 						}.bind(this), travelTimeMs);
 					}
 				}
+				
 				callback(null);
 			})
 			.on('get', (callback) => {
-				this.log.debug(sprintf("getTargetPosition %s = %s", this.address, this.state));
+				this.log.debug(sprintf("getTargetPosition %s = %s", this.address, this.targetPosition));
 				callback(null, this.targetPosition);
 			});
 
@@ -1845,28 +1866,28 @@ class MHAlarm {
 			});
 		this.alarmService.getCharacteristic(Characteristic.StatusFault)
 			.on('get', (callback) => {
-				this.log.debug(sprintf("getConsumptio = %s", this.value));
+				this.log.debug(sprintf("alarm status fault get = %s", this.fault));
 				callback(null, this.fault);
 			});
 		this.alarmService.getCharacteristic(Characteristic.StatusTampered)
 			.on('get', (callback) => {
-				this.log.debug(sprintf("getConsumptio = %s", this.value));
+				this.log.debug(sprintf("alarm status tampered get = %s", this.tampered));
 				callback(null, this.tampered);
 			});
 		this.alarmBatteryService = new Service.BatteryService(this.name);
 		this.alarmBatteryService.getCharacteristic(Characteristic.StatusLowBattery)
 			.on('get', (callback) => {
-				this.log.debug(sprintf("alarm current = %d", this.state));
+				this.log.debug(sprintf("alarm statuslowbatery = %d", this.lowbattery));
 				callback(null, this.lowbattery);
 			});
 		this.alarmBatteryService.getCharacteristic(Characteristic.BatteryLevel)
 			.on('get', (callback) => {
-				this.log.debug(sprintf("alarm current = %d", this.state));
+				this.log.debug(sprintf("alarm batterylevel = %d", this.batterylevel));
 				callback(null, this.batterylevel);
 			});
 		this.alarmBatteryService.getCharacteristic(Characteristic.ChargingState)
 			.on('get', (callback) => {
-				this.log.debug(sprintf("alarm current = %d", this.state));
+				this.log.debug(sprintf("alarm batterycharging = %d", this.batterycharging));
 				callback(null, this.batterycharging);
 			});
 
