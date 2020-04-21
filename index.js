@@ -655,21 +655,27 @@ class LegrandMyHome {
 						case 0:
 							accessory.state = Characteristic.PositionState.STOPPED;
 							accessory.evaluatePosition();
+							clearInterval(accessory.updateTimer);
 							break;
 						case 1:
 							if (accessory.invert == false)
 								accessory.state = Characteristic.PositionState.INCREASING;
 							else
 								accessory.state = Characteristic.PositionState.DECREASING;
-							accessory.evaluatePosition();
+							accessory.updateTimer = setInterval(function () {
+								accessory.evaluatePosition();
+								accessory.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
+							}.bind(accessory), 500);		
 							break;
 						case 2:
-
 							if (accessory.invert == false)
 								accessory.state = Characteristic.PositionState.DECREASING;
 							else
 								accessory.state = Characteristic.PositionState.INCREASING;
-							accessory.evaluatePosition();
+							accessory.updateTimer = setInterval(function () {
+								accessory.evaluatePosition();
+								accessory.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
+							}.bind(accessory), 500);		
 							break;
 					}
 					accessory.windowCoveringService.getCharacteristic(Characteristic.PositionState).getValue(null);
@@ -685,20 +691,27 @@ class LegrandMyHome {
 							case 0:
 								accessory.state = Characteristic.PositionState.STOPPED;
 								accessory.evaluatePosition();
+								clearInterval(accessory.updateTimer);
 								break;
 							case 1:
 								if (accessory.invert == false)
 									accessory.state = Characteristic.PositionState.INCREASING;
 								else
 									accessory.state = Characteristic.PositionState.DECREASING;
-								accessory.evaluatePosition();
+								accessory.updateTimer = setInterval(function () {
+									accessory.evaluatePosition();
+									accessory.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
+								}.bind(accessory), 500);		
 								break;
 							case 2:
 								if (accessory.invert == false)
 									accessory.state = Characteristic.PositionState.DECREASING;
 								else
 									accessory.state = Characteristic.PositionState.INCREASING;
-								accessory.evaluatePosition();
+								accessory.updateTimer = setInterval(function () {
+									accessory.evaluatePosition();
+									accessory.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
+								}.bind(accessory), 500);		
 								break;
 						}
 						accessory.windowCoveringService.getCharacteristic(Characteristic.PositionState).getValue(null);
@@ -713,20 +726,27 @@ class LegrandMyHome {
 							case 0:
 								accessory.state = Characteristic.PositionState.STOPPED;
 								accessory.evaluatePosition();
+								clearInterval(accessory.updateTimer);
 								break;
 							case 1:
 								if (accessory.invert == false)
 									accessory.state = Characteristic.PositionState.INCREASING;
 								else
 									accessory.state = Characteristic.PositionState.DECREASING;
-								accessory.evaluatePosition();
+								accessory.updateTimer = setInterval(function () {
+									accessory.evaluatePosition();
+									accessory.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
+								}.bind(accessory), 500);		
 								break;
 							case 2:
 								if (accessory.invert == false)
 									accessory.state = Characteristic.PositionState.DECREASING;
 								else
 									accessory.state = Characteristic.PositionState.INCREASING;
-								accessory.evaluatePosition();
+								accessory.updateTimer = setInterval(function () {
+									accessory.evaluatePosition();
+									accessory.windowCoveringService.getCharacteristic(Characteristic.CurrentPosition).getValue(null);
+								}.bind(accessory), 500);		
 								break;
 						}
 						accessory.windowCoveringService.getCharacteristic(Characteristic.PositionState).getValue(null);
@@ -1015,12 +1035,13 @@ class MHBlind {
 		this.invert = config.invert || false;
 
 		this.runningStartTime = -1;
+		this.startPosition = 0;
 		this.runningDirection = Characteristic.PositionState.STOPPED;
 		this.state = Characteristic.PositionState.STOPPED;
 		this.currentPosition = 0;
 		this.targetPosition = 0;
 		this.startDelayMs = config.startDelayMs || 0; /* Start delay of the automation and MH relay */
-		this.timeAdjust = config.timeAdjust || 5; /* Percent error, F411 is a bit buggy */
+		this.timeAdjust = config.timeAdjust || 0; /* Percent error, F411 is a bit buggy */
 		this.log.info(sprintf("LegrandMyHome::MHBlind create object: %s", this.address));
 
 		var address = this.address.split("/");
@@ -1028,32 +1049,44 @@ class MHBlind {
 		this.ambient = parseInt(address[1]);
 		this.pl = parseInt(address[2]);
 		this.timer = 0;
+		this.updateTimer = 0;
+		this.travelTimeMs = -1;
 	}
 
 	evaluatePosition() {
 		if (this.runningDirection == Characteristic.PositionState.STOPPED && this.state != Characteristic.PositionState.STOPPED) {
 			this.runningStartTime = new Date();
+			this.startPosition = this.currentPosition;
 			this.runningDirection = this.state;
 			this.log.debug(sprintf("Starting position is %d", this.currentPosition));
+			/* Use the calculated travel time only if the target isn't the complete Up or Complete Down */
+			if (this.travelTimeMs > 0) {
+				clearTimeout(this.timer);
+				this.timer = setTimeout(function () {
+					this.mh.simpleBlindCommand(this.address, 0);
+					this.log.debug(sprintf("setTargetPosition %s at %s done", this.address, this.targetPosition));
+				}.bind(this), this.travelTimeMs);
+			}
 		} else {
 			if (this.runningDirection != Characteristic.PositionState.STOPPED && this.state == Characteristic.PositionState.STOPPED) {
 				if (this.runningDirection == Characteristic.PositionState.INCREASING) {
-					this.currentPosition = Math.min(100, this.currentPosition + (100 / (this.time * 1000) * (((new Date()) - this.runningStartTime + this.startDelayMs) * (1 + this.timeAdjust / 100))));
+					this.currentPosition = Math.min(100, this.startPosition + (100 / (this.time * 1000) * (((new Date()) - this.runningStartTime + this.startDelayMs) * (1 + this.timeAdjust / 100))));
 				}
 				if (this.runningDirection == Characteristic.PositionState.DECREASING) {
-					this.currentPosition = Math.max(0, this.currentPosition - (100 / (this.time * 1000) * (((new Date()) - this.runningStartTime + this.startDelayMs) * (1 + this.timeAdjust / 100))));
+					this.currentPosition = Math.max(0, this.startPosition - (100 / (this.time * 1000) * (((new Date()) - this.runningStartTime + this.startDelayMs) * (1 + this.timeAdjust / 100))));
 				}
 				this.runningDirection = this.state;
 				this.targetPosition = this.currentPosition;
 				this.runningStartTime = -1;
+				this.travelTimeMs = -1;
 
 				this.log.debug(sprintf("Ending position is %d", this.currentPosition));
 			} else {
 				if (this.runningDirection == Characteristic.PositionState.INCREASING) {
-					this.currentPosition = Math.min(100, this.currentPosition + (100 / (this.time * 1000) * (((new Date()) - this.runningStartTime + this.startDelayMs) * (1 + this.timeAdjust / 100))));
+					this.currentPosition = Math.min(100, this.startPosition + (100 / (this.time * 1000) * (((new Date()) - this.runningStartTime + this.startDelayMs) * (1 + this.timeAdjust / 100))));
 				}
 				if (this.runningDirection == Characteristic.PositionState.DECREASING) {
-					this.currentPosition = Math.max(0, this.currentPosition - (100 / (this.time * 1000) * (((new Date()) - this.runningStartTime + this.startDelayMs) * (1 + this.timeAdjust / 100))));
+					this.currentPosition = Math.max(0, this.startPosition - (100 / (this.time * 1000) * (((new Date()) - this.runningStartTime + this.startDelayMs) * (1 + this.timeAdjust / 100))));
 				}
 			}
 		}
@@ -1091,25 +1124,30 @@ class MHBlind {
 			.on('set', (value, callback) => {
 				this.targetPosition = value;
 				this.log.debug(sprintf("setTargetPosition %s = %s", this.address, this.targetPosition));
-				var travelTimeMs = this.evaluateTravelTimeMs(this.currentPosition, this.targetPosition);
-				if (value > this.currentPosition && this.state != Characteristic.PositionState.INCREASING) {
-					this.mh.simpleBlindCommand(this.address, 1);
-				} else if (value < this.currentPosition && this.state != Characteristic.PositionState.DECREASING) {
-					this.mh.simpleBlindCommand(this.address, 2);
-				} else {
-					this.mh.simpleBlindCommand(this.address, 0);
-				}
+				
+				
+				if (this.invert == false)
+					if (value > this.currentPosition && this.state != Characteristic.PositionState.INCREASING) {
+						this.mh.simpleBlindCommand(this.address, 1);
+					} else if (value < this.currentPosition && this.state != Characteristic.PositionState.DECREASING) {
+						this.mh.simpleBlindCommand(this.address, 2);
+					} else {
+						this.mh.simpleBlindCommand(this.address, 0);
+					}
+				else
+					if (value > this.currentPosition && this.state != Characteristic.PositionState.INCREASING) {
+						this.mh.simpleBlindCommand(this.address, 2);
+					} else if (value < this.currentPosition && this.state != Characteristic.PositionState.DECREASING) {
+						this.mh.simpleBlindCommand(this.address, 1);
+					} else {
+						this.mh.simpleBlindCommand(this.address, 0);
+					}
 
 				/* Use the calculated travel time only if the target isn't the complete Up or Complete Down */
-				if (this.targetPosition > 0 && this.targetPosition < 100 && this.currentPosition != this.targetPosition) {
-					if (travelTimeMs > 0) {
-						clearTimeout(this.timer);
-						this.timer = setTimeout(function () {
-							this.mh.simpleBlindCommand(this.address, 0);
-							this.log.debug(sprintf("setTargetPosition %s at %s done", this.address, this.targetPosition));
-						}.bind(this), travelTimeMs);
-					}
-				}
+				if (this.targetPosition > 0 && this.targetPosition < 100 && this.currentPosition != this.targetPosition)
+					this.travelTimeMs = this.evaluateTravelTimeMs(this.currentPosition, this.targetPosition);
+				else
+					this.travelTimeMs = -1;
 				
 				callback(null);
 			})
