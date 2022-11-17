@@ -1,6 +1,6 @@
 {
   "name": "homebridge-myhome",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "Legrand MyHome plugin for homebridge: https://github.com/nfarina/homebridge",
   "license": "MIT",
   "keywords": [
@@ -24,6 +24,6 @@
     "sprintf-js": "^1.0.3",
     "moment": "^2.18.1",
     "correcting-interval": "^2.0.0",
-    "fakegato-history": "^0.5.6"
+    "fakegato-history": "^0.6.3"
   }
 }
