@@ -1,5 +1,5 @@
 # MyHomePlugin
-Legrand (BTicino) MyHome plugin for homebridge: https://github.com/nfarina/homebridge
+Legrand (BTicino) MyHome plugin for [homebridge](https://github.com/homebridge/homebridge).
 
 Legrand MyHome (http://www.homesystems-legrandgroup.com/BtHomeSystems/home.action) is an Home Automation solution that can manage:
 - lighting (standard on/off/dimmed lights)
